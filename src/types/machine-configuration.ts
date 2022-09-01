@@ -1,10 +1,9 @@
-declare class MachineConfiguration {
-
+export declare class MachineConfiguration {
 	getXML(): String;
 	MachineConfiguration(): void;
 	MachineConfiguration(u: Axis): void;
-	MachineConfiguration(Axis u, Axis v): void;
-	MachineConfiguration(Axis u, Axis v, Axis w): void;
+	MachineConfiguration(u: Axis,v: Axis): void;
+	MachineConfiguration(u: Axis,v: Axis,w: Axis): void;
 	getMilling(): boolean;
 	setMilling(milling: boolean): void;
 	getTurning(): boolean;
@@ -96,14 +95,14 @@ declare class MachineConfiguration {
 	isSupportedPosition(position: Vector): boolean;
 	getValidityStatus(): Integer;
 	isSupported(): boolean;
-	setMultiAxisFeedrate(Integer feedMode, number maximumFeedrate, Integer feedType, number outputTolerance, number bpwRatio): void;
+	setMultiAxisFeedrate(feedMode: Integer,maximumFeedrate: number,feedType: Integer,outputTolerance: number,bpwRatio: number): void;
 	getMultiAxisFeedrateMode(): Integer;
 	getMultiAxisFeedrateMaximum(): number;
 	getMultiAxisFeedrateDPMType(): Integer;
 	getMultiAxisFeedrateInverseTimeUnits(): Integer;
 	getMultiAxisFeedrateOutputTolerance(): number;
 	getMultiAxisFeedrateBpwRatio(): number;
-	setSingularity(boolean adjust, Integer method, number cone, number angle, number tolerance, number linearizationTolerance): void;
+	setSingularity(adjust: boolean,method: Integer,cone: number,angle: number,tolerance: number,linearizationTolerance: number): void;
 	getSingularityAdjust(): boolean;
 	getSingularityMethod(): Integer;
 	getSingularityCone(): number;
@@ -125,26 +124,26 @@ declare class MachineConfiguration {
 	Vectorclamp (Vector _abc)
 	VectorclampToResolution (Vector _abc)
 	getRotationAxis(axis: Axis): Vector;
-	preserveRotaryAtZero(Vector currentDirection, Vector previousABC, Vector currentABC): Vector;
-	getClosestABC(Vector current, Vector abc): Vector;
+	preserveRotaryAtZero(currentDirection: Vector,previousABC: Vector,currentABC: Vector): Vector;
+	getClosestABC(current: Vector,abc: Vector): Vector;
 	booleanisXYZSupported (Vector _xyz)
 	booleanisABCSupported (Vector _abc)
 	isDirectionSupported(direction: Vector): boolean;
-	getOptimizedPosition(Vector currentXYZ, Vector currentABC, Integer tcpType, Integer optimizeType, boolean forceAdjustment): Vector;
-	getOptimizedDirection(Vector direction, Vector currentABC, boolean reverse, boolean forceAdjustment): Vector;
-	getOptimizedTables(Vector currentXYZ, Vector currentABC, boolean reverse, Integer optimizeType, boolean isVector, boolean forceAdjustment): Vector;
-	getOptimizedHeads(Vector currentXYZ, Vector currentABC, boolean reverse, Integer optimizeType, boolean forceAdjustment, boolean pivotPoint): Vector;
+	getOptimizedPosition(currentXYZ: Vector,currentABC: Vector,tcpType: Integer,optimizeType: Integer,forceAdjustment: boolean): Vector;
+	getOptimizedDirection(direction: Vector,currentABC: Vector,reverse: boolean,forceAdjustment: boolean): Vector;
+	getOptimizedTables(currentXYZ: Vector,currentABC: Vector,reverse: boolean,optimizeType: Integer,isVector: boolean,forceAdjustment: boolean): Vector;
+	getOptimizedHeads(currentXYZ: Vector,currentABC: Vector,reverse: boolean,optimizeType: Integer,forceAdjustment: boolean,pivotPoint: boolean): Vector;
 	getABC(orientation: Matrix): Vector;
 	getABCByDirectionBoth(direction: Vector): VectorPair;
 	getABCByDirection(direction: Vector): Vector;
 	VectorgetABCByDirection2 (direction: Vector)
-	getABCByPreference(Matrix orientation, Vector current, Integer controllingAxis, Integer type, Integer options): Vector;
+	getABCByPreference(orientation: Matrix,current: Vector,controllingAxis: Integer,type: Integer,options: Integer): Vector;
 	getOtherABCByDirection(abc: Vector): Vector;
 	getPreferredABC(abc: Vector): Vector;
 	remapABC(abc: Vector): Vector;
-	remapToABC(Vector abc, Vector current): Vector;
+	remapToABC(abc: Vector,current: Vector): Vector;
 	getCoordinates(): Integer;
-	getPosition(Vector p, Vector abc): Vector;
+	getPosition(p: Vector,abc: Vector): Vector;
 	getDirection(abc: Vector): Vector;
 	getHeadABC(abc: Vector): Vector;
 	getTableABC(abc: Vector): Vector;
@@ -153,8 +152,8 @@ declare class MachineConfiguration {
 	getOrientation(abc: Vector): Matrix;
 	getOrientationABC(abc: Vector): Matrix;
 	getSpindleAxisABC(abc: Vector): Vector;
-	getRemainingOrientation(Vector abc, Matrix desired): Matrix;
-	getRemainingOrientationABC(Vector abc, Matrix desired): Matrix;
+	getRemainingOrientation(abc: Vector,desired: Matrix): Matrix;
+	getRemainingOrientationABC(abc: Vector,desired: Matrix): Matrix;
 	getRetractPlane(): number;
 	setRetractPlane(retractPlane: number): void;
 	hasHomePositionX(): boolean;
@@ -183,11 +182,11 @@ declare class MachineConfiguration {
 	getnumberExtruders(): Integer;
 	setnumberExtruders(num: Integer): void;
 	getExtruderOffsetX(extruderNo: Integer): number;
-	setExtruderOffsetX(Integer extruderNo, number x): void;
+	setExtruderOffsetX(extruderNo: Integer,x: number): void;
 	getExtruderOffsetY(extruderNo: Integer): number;
-	setExtruderOffsetY(Integer extruderNo, number y): void;
+	setExtruderOffsetY(extruderNo: Integer,y: number): void;
 	getExtruderOffsetZ(extruderNo: Integer): number;
-	setExtruderOffsetZ(Integer extruderNo, number z): void;
+	setExtruderOffsetZ(extruderNo: Integer,z: number): void;
 	getModel(): String;
 	setModel(model: String): void;
 	getDescription(): String;
@@ -199,7 +198,7 @@ declare class MachineConfiguration {
 	getControl(): String;
 	setControl(control: String): void;
 	isCoolantSupported(coolant: Integer): boolean;
-	setCoolantSupported(Integer coolant, boolean available): void;
+	setCoolantSupported(coolant: Integer,available: boolean): void;
 	getRetractOnIndexing(): boolean;
 	setRetractOnIndexing(retractOnIndexing: boolean): void;
 	getShortestAngularRotation(): boolean;

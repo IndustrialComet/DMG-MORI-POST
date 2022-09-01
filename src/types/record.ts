@@ -1,4 +1,4 @@
-declare class Record {
+export declare interface Record {
 	isValid(): boolean;
 	getId(): Integer;
 	getType(): Integer;

@@ -1,4 +1,4 @@
-declare class Vector {
+export declare interface Vector {
 	x: number;//The X coordinate.
 	y: number;//The Y coordinate.
 	z: number;//The Z coordinate.

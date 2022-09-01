@@ -1,4 +1,4 @@
-declare class Format {
+export declare interface Format {
 	constructor(specifiers: Map)
 	format(value: number): String;
 	getResultingValue(value: number): number;

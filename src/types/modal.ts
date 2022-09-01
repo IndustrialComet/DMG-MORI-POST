@@ -1,8 +1,8 @@
 type Value = boolean | number | string;
 
-declare class Modal {
+export declare interface Modal {
 	constructor(specifiers: Specifiers,format: Format);
-	format(value: Value): String;
+	format(value: Value): string;
 	getPrefix(): Value;
 	setPrefix(prefix: Value): void;
 	getSuffix(): Value;

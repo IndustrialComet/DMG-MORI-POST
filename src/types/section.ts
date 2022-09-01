@@ -1,5 +1,8 @@
-declare class Section {
-	getId(): Integer;
+import {Record} from "./record";
+import {Vector} from "./vector";
+
+export declare interface Section {
+	getId(): number;
 	//PostPropertyMap::getOperationProperties(): PropertyMap;
 	//optional< String > 	getStrategy ()
 	getnumberOfRecords(): Integer;
@@ -49,9 +52,9 @@ declare class Section {
 	getDynamicWorkOffset(): Integer;
 	getAxisSubstitution(): boolean;
 	getAxisSubstitutionRadius(): number;
-	getGlobalPosition(Vector p): Vector;
-	getWCSPosition(Vector p): Vector;
-	getSectionPosition(Vector p): Vector;
+	getGlobalPosition(p: Vector): Vector;
+	getWCSPosition(p: Vector): Vector;
+	getSectionPosition(p: Vector): Vector;
 	getMaximumSpindleSpeed(): number;
 	getMaximumFeedrate(): number;
 	getCuttingDistance(): number;
@@ -61,11 +64,11 @@ declare class Section {
 	getnumberOfCyclePoints(): Integer;
 	getZRange(): Range;
 	getGlobalZRange(): Range;
-	getGlobalRange(Vector direction): Range;
+	getGlobalRange(direction: Vector): Range;
 	getBoundingBox(): BoundingBox;
 	getGlobalBoundingBox(): BoundingBox;
-	getOptimizedBoundingBox(MachineConfiguration machine, Vector abc): BoundingBox;
-	isCuttingMotionAwayFromRotary(number distance, number tolerance): boolean;
+	getOptimizedBoundingBox(machine: MachineConfiguration,abc: Vector): BoundingBox;
+	isCuttingMotionAwayFromRotary(distance: number,tolerance: number): boolean;
 	hasWellDefinedPosition(): boolean;
 	getFirstPosition(): Vector;
 	getInitialPosition(): Vector;
@@ -85,25 +88,28 @@ declare class Section {
 	getUpperToolAxisABC(): Vector;
 	isOptimizedForMachine(): boolean;
 	getOptimizedTCPMode(): Integer;
-	hasParameter(String name): boolean;
-	getParameter(String name, Value defaultValue): Value;
-	hasCycle(String uri): boolean;
+	hasParameter(name: String): boolean;
+	getParameter(name: String,defaultValue: Value): Value;
+	hasCycle(uri: String): boolean;
 	hasAnyCycle(): boolean;
-	getnumberOfCyclesWithId(String uri): Integer;
+	getnumberOfCyclesWithId(uri: String): Integer;
 	getnumberOfCycles(): Integer;
-	getCycleId(Integer index): String;
+	getCycleId(index: Integer): String;
 	getFirstCycle(): String;
 	getLastCycle(): String;
-	doesStartWithCycle(String uri): boolean;
-	boolean 	doesEndWithCycle (String &_uri) noexcept
-	doesStartWithCycleIgnoringPositioning(String uri): boolean;
-	doesEndWithCycleIgnoringPositioning(String uri): boolean;
-	doesStrictCycle(String uri): boolean;
-	hasCycleParameter(Integer index, String name): boolean;
-	getCycleParameter(Integer index, String name): Value;
-	 	optimizeMachineAnglesByMachine (MachineConfiguration machine, Integer optimizeType)
-	 	optimize3DPositionsByMachine (MachineConfiguration machine, Vector abc, Integer optimizeType)
-	getABCByPreference(MachineConfiguration machine, Matrix orientation, Vector current, Integer controllingAxis, Integer type, Integer options): Vector;
-	doesToolpathFitWithinLimits(MachineConfiguration machine, Vector current): boolean;
-	checkGroup(Integer groups): boolean;
+	doesStartWithCycle(uri: String): boolean;
+	doesEndWithCycle (String &_uri): boolean;//noexcept
+	doesStartWithCycleIgnoringPositioning(uri: String): boolean;
+	doesEndWithCycleIgnoringPositioning(uri: String): boolean;
+	doesStrictCycle(uri: String): boolean;
+	hasCycleParameter(index: Integer,name: String): boolean;
+	getCycleParameter(index: Integer,name: String): Value;
+	optimizeMachineAnglesByMachine (machine: MachineConfiguration,optimizeType: Integer): void;
+	optimize3DPositionsByMachine (machine: MachineConfiguration,abc: Vector,optimizeType: Integer): void;
+	getABCByPreference(machine: MachineConfiguration,orientation: Matrix,current: Vector,controllingAxis: Integer,type: Integer,options: Integer): Vector;
+	doesToolpathFitWithinLimits(machine: MachineConfiguration,current: Vector): boolean;
+	checkGroup(groups: Integer): boolean;
 }
+
+// ?([A-Z]+) ([A-Z]+)([,)])
+//$2: $1$3

@@ -1,4 +1,5 @@
-/// <reference path="./types/index.d.ts" />
+import { CAPABILITY } from "./types/constant";
+import {CONSTANT,Vector,Matrix} from "./types/index";
 /**
 	Copyright (C) 2012-2016 by Autodesk, Inc.
 	All rights reserved.
@@ -26,12 +27,12 @@ extension = "nc";
 programNameIsInteger = false;
 setCodePage("ascii");
 
-capabilities = CAPABILITY_MILLING;
-tolerance = spatial(0.002, MM);
+capabilities = CONSTANT.CAPABILITY.MILLING;
+tolerance = spatial(0.002, CONSTANT.UNIT.MILLIMETER);
 
-minimumChordLength = spatial(0.01, MM);
-minimumCircularRadius = spatial(0.01, MM);
-maximumCircularRadius = spatial(1000, MM);
+minimumChordLength = spatial(0.01, CONSTANT.UNIT.MILLIMETER);
+minimumCircularRadius = spatial(0.01, CONSTANT.UNIT.MILLIMETER);
+maximumCircularRadius = spatial(1000, CONSTANT.UNIT.MILLIMETER);
 minimumCircularSweep = toRad(0.01);
 maximumCircularSweep = toRad(360);
 
@@ -84,8 +85,8 @@ var formats = {
 	//ANGLE
 	taper: createFormat({decimals:1, scale:DEG}),
 	//DRILLING
-	feed: createFormat({decimals:(unit == MM ? 0 : 1), forceDecimal:true}),
-	pitch:createFormat({decimals:(unit == MM ? 3 : 4), forceDecimal:true}),
+	feed: createFormat({decimals:(unit == CONSTANT.UNIT.MILLIMETER ? 0 : 1), forceDecimal:true}),
+	pitch:createFormat({decimals:(unit == CONSTANT.UNIT.MILLIMETER ? 3 : 4), forceDecimal:true}),
 	rpm: createFormat({decimals:0}),
 	//TOOLS
 	tool: createFormat({decimals:0}),
@@ -126,9 +127,11 @@ var forceMultiAxisIndexing = false; // force multi-axis indexing for 3D programs
 
 var WARNING_WORK_OFFSET = 0;
 
-var ANGLE_PROBE_NOT_SUPPORTED = 0;
-var ANGLE_PROBE_USE_ROTATION = 1;
-var ANGLE_PROBE_USE_CAXIS = 2;
+enum ANGLE_PROBE {
+	NOT_SUPPORTED,
+	USE_ROTATION,
+	USE_CAXIS,
+}
 
 // collected state
 var sequenceNumber: number;
@@ -138,7 +141,7 @@ var forceSpindleSpeed = false;
 var activeMovements; // do not use by default
 var currentFeedId: number | undefined;
 var g68RotationMode = 0;
-var angularProbingMode;
+var angularProbingMode: ANGLE_PROBE;
 var now = new Date();
 var wfo;
 
@@ -194,12 +197,12 @@ function writeComment(text: string) {
 function onOpen() {
 
 	if (false) { // note: setup your machine here
-	var aAxis = createAxis({coordinate:0, table:false, axis:[1, 0, 0], range:[-360,360], preference:1});
-	var cAxis = createAxis({coordinate:2, table:false, axis:[0, 0, 1], range:[-360,360], preference:1});
-	machineConfiguration = new MachineConfiguration(aAxis, cAxis);
+		var aAxis = createAxis({coordinate:0, table:false, axis:[1, 0, 0], range:[-360,360], preference:1});
+		var cAxis = createAxis({coordinate:2, table:false, axis:[0, 0, 1], range:[-360,360], preference:1});
+		machineConfiguration = new MachineConfiguration(aAxis, cAxis);
 
-	setMachineConfiguration(machineConfiguration);
-	optimizeMachineAngles2(0); // TCP mode
+		setMachineConfiguration(machineConfiguration);
+		optimizeMachineAngles2(0); // TCP mode
 	}
 
 	if (!machineConfiguration.isMachineCoordinate(0)) {
@@ -213,13 +216,13 @@ function onOpen() {
 	}
 	
 	if (!properties.separateWordsWithSpace) {
-	setWordSeparator("");
+		setWordSeparator("");
 	}
 
 	if (properties.forceIJK) {
-	outputs.i = createReferenceVariable({prefix:"I", force:true}, formats.ijk);
-	outputs.j = createReferenceVariable({prefix:"J", force:true}, formats.ijk);
-	outputs.k = createReferenceVariable({prefix:"K", force:true}, formats.ijk);
+		outputs.i = createReferenceVariable({prefix:"I", force:true}, formats.ijk);
+		outputs.j = createReferenceVariable({prefix:"J", force:true}, formats.ijk);
+		outputs.k = createReferenceVariable({prefix:"K", force:true}, formats.ijk);
 	}
 
 	sequenceNumber = properties.sequenceNumberStart;
@@ -394,7 +397,7 @@ var lengthCompensationActive = false;
 var retracted = false; // specifies that the tool has been retracted to the safe plane
 /** Disables length compensation if currently active or if forced. */
 
-function disableLengthCompensation(force) {
+function disableLengthCompensation(force: boolean) {
 	if (lengthCompensationActive || force) {
 	//validate(retracted, "Cannot cancel length compensation if the machine is not fully retracted.");
 	 // writeBlock(formats.g.format(49));
@@ -404,9 +407,9 @@ function disableLengthCompensation(force) {
 
 var currentSmoothing = false;
 
-function setSmoothing(mode) {
+function setSmoothing(mode: boolean) {
 	if (mode == currentSmoothing) {
-	return false;
+		return false;
 	}
 
 	// 1) Make sure G49 is called before the execution of G05.1 Q1 Rx
@@ -434,7 +437,7 @@ class FeedContext {
 
 function getFeed(f) {
 	if (properties.useG95) {
-	return outputs.feed.format(f/spindleSpeed); // use feed value
+		return outputs.feed.format(f/spindleSpeed); // use feed value
 	}
 	if (activeMovements) {
 	var feedContext = activeMovements[movement];
@@ -448,7 +451,7 @@ function getFeed(f) {
 		return "F#" + (firstFeedParameter + feedContext.id);
 		}
 	}
-	currentFeedId = undefined; // force Q feed next time
+		currentFeedId = undefined; // force Q feed next time
 	}
 	return outputs.feed.format(f); // use feed value
 }
@@ -589,7 +592,7 @@ function setWorkPlane(abc: Vector) {
 	return; // no change
 	}
 
-	onCommand(COMMAND_UNLOCK_MULTI_AXIS);
+	onCommand(CONSTANT.COMMAND.UNLOCK_MULTI_AXIS);
 
 	if (useMultiAxisFeatures) {
 	if (abc.isNonZero()) {
@@ -608,7 +611,7 @@ function setWorkPlane(abc: Vector) {
 	);
 	}
 	
-	onCommand(COMMAND_LOCK_MULTI_AXIS);
+	onCommand(CONSTANT.COMMAND.LOCK_MULTI_AXIS);
 
 	currentWorkPlaneABC = abc;
 }
@@ -631,8 +634,8 @@ function getWorkPlaneMachineABC(workPlane) {
 	}
 	
 	try {
-	abc = machineConfiguration.remapABC(abc);
-	currentMachineABC = abc;
+		abc = machineConfiguration.remapABC(abc);
+		currentMachineABC = abc;
 	} catch (e) {
 	error(
 		localize("Machine angles not supported") + ":"
@@ -705,7 +708,7 @@ function onSection() {
 	*/
 	// retract to safe plane
 	retracted = true;
-	onCommand(COMMAND_COOLANT_OFF);
+	onCommand(CONSTANT.COMMAND.COOLANT_OFF);
 	writeBlock(modals.feed.format(0), formats.g.format(49)); 
 	writeBlock(formats.g.format(53), "Z" + formats.xyz.format(0), formats.m.format(19)); // retract
 	writeBlock(modals.abs.format(90));
@@ -744,10 +747,10 @@ function onSection() {
 	forceWorkPlane();
 	
 	retracted = true;
-	onCommand(COMMAND_COOLANT_OFF);
+	onCommand(CONSTANT.COMMAND.COOLANT_OFF);
 	
 	if (properties.optionalStop) {
-		onCommand(COMMAND_OPTIONAL_STOP);
+		onCommand(CONSTANT.COMMAND.OPTIONAL_STOP);
 	}
 /*
 	 if (!isFirstSection() && properties.optionalStop) {
@@ -991,12 +994,12 @@ function onSection() {
 	}
 
 	if (isProbeOperation()) {
-	if (g68RotationMode != 0) {
-		error(localize("You cannot probe while G68 Rotation is in effect."));
-		return;
-	}
-	angularProbingMode = getAngularProbingMode();
-	writeBlock(formats.g.format(65), "P" + 9832); // spin the probe on
+		if (g68RotationMode != 0) {
+			error(localize("You cannot probe while G68 Rotation is in effect."));
+			return;
+		}
+		angularProbingMode = getAngularProbingMode();
+		writeBlock(formats.g.format(65), "P" + 9832); // spin the probe on
 	}
 
 	retracted = false;
@@ -1036,15 +1039,15 @@ function approach(value) {
 /**
 	Determine if angular probing is supported
 */
-function getAngularProbingMode() {
+function getAngularProbingMode(): ANGLE_PROBE {
 	if (machineConfiguration.isMultiAxisConfiguration()) {
-	if (machineConfiguration.isMachineCoordinate(2)) {
-		return ANGLE_PROBE_USE_CAXIS;
+		if (machineConfiguration.isMachineCoordinate(2)) {
+			return ANGLE_PROBE.USE_CAXIS;
+		} else {
+			return ANGLE_PROBE.NOT_SUPPORTED;
+		}
 	} else {
-		return ANGLE_PROBE_NOT_SUPPORTED;
-	}
-	} else {
-	return ANGLE_PROBE_USE_ROTATION;
+		return ANGLE_PROBE.USE_ROTATION;
 	}
 }
 
@@ -1063,7 +1066,7 @@ function setProbingAngle() {
 		"Z0", "I0.0", "J0.0", "K1.0", "R[#139]"
 		);
 		g68RotationMode = 3;
-	} else if (angularProbingMode != ANGLE_PROBE_NOT_SUPPORTED) {
+	} else if (angularProbingMode != ANGLE_PROBE.NOT_SUPPORTED) {
 		writeBlock("#26010=#135");
 		writeBlock("#26011=#136");
 		writeBlock("#26012=#137");
@@ -1087,7 +1090,7 @@ function onCyclePoint(x: number, y: number, z: number) {
 		error(localize("Work offset is out of range."));
 		return;
 	} else if (workOffset > 6) {
-		probeWorkOffsetCode = probe100Format.format(workOffset - 6 + 100);
+		probeWorkOffsetCode = formats.probe.format(workOffset - 6 + 100);
 	} else {
 		probeWorkOffsetCode = workOffset + "."; // G54->G59
 	}
@@ -1512,7 +1515,7 @@ function onCyclePoint(x: number, y: number, z: number) {
 		conditional(cornerI != 0, "I" + formats.xyz.format(cornerI)),
 		conditional(cornerJ != 0, "J" + formats.xyz.format(cornerJ)),
 		"Q" + formats.xyz.format(cycle.probeOvertravel),
-		conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE_USE_CAXIS), "S" + probeWorkOffsetCode)
+		conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE.USE_CAXIS), "S" + probeWorkOffsetCode)
 		);
 		break;
 	case "probing-xy-outer-corner":
@@ -1533,7 +1536,7 @@ function onCyclePoint(x: number, y: number, z: number) {
 		conditional(cornerI != 0, "I" + formats.xyz.format(cornerI)),
 		conditional(cornerJ != 0, "J" + formats.xyz.format(cornerJ)),
 		"Q" + formats.xyz.format(cycle.probeOvertravel),
-		conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE_USE_CAXIS), "S" + probeWorkOffsetCode)
+		conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE.USE_CAXIS), "S" + probeWorkOffsetCode)
 		);
 		break;
 	case "probing-x-plane-angle":
@@ -1590,7 +1593,7 @@ function onRadiusCompensation() {
 	pendingRadiusCompensation = radiusCompensation;
 }
 
-function onRapid(_x, _y, _z) {
+function onRapid(_x: number, _y: number, _z: number) {
 	var x = outputs.x.format(_x);
 	var y = outputs.y.format(_y);
 	var z = outputs.z.format(_z);
@@ -1604,7 +1607,7 @@ function onRapid(_x, _y, _z) {
 	}
 }
 
-function onLinear(_x, _y, _z, feed) {
+function onLinear(_x: number, _y: number, _z: number, feed: number) {
 	var x = outputs.x.format(_x);
 	var y = outputs.y.format(_y);
 	var z = outputs.z.format(_z);
@@ -1641,33 +1644,33 @@ function onLinear(_x, _y, _z, feed) {
 	}
 }
 
-function onRapid5D(_x, _y, _z, _a, _b, _c) {
+function onRapid5D(_x: number,_y: number,_z: number,_a: number,_b: number,_c: number) {
 	if (pendingRadiusCompensation >= 0) {
-	error(localize("Radius compensation mode cannot be changed at rapid traversal."));
-	return;
+		error(localize("Radius compensation mode cannot be changed at rapid traversal."));
+		return;
 	}
 	if (currentSection.isOptimizedForMachine()) {
-	var x = outputs.x.format(_x);
-	var y = outputs.y.format(_y);
-	var z = outputs.z.format(_z);
-	var a = outputs.a.format(_a);
-	var b = outputs.b.format(_b);
-	var c = outputs.c.format(_c);
-	writeBlock(modals.motion.format(0), x, y, z, a, b, c);
+		var x = outputs.x.format(_x);
+		var y = outputs.y.format(_y);
+		var z = outputs.z.format(_z);
+		var a = outputs.a.format(_a);
+		var b = outputs.b.format(_b);
+		var c = outputs.c.format(_c);
+		writeBlock(modals.motion.format(0), x, y, z, a, b, c);
 	} else {
-	forceXYZ();
-	var x = outputs.x.format(_x);
-	var y = outputs.y.format(_y);
-	var z = outputs.z.format(_z);
-	var i = formats.ijk.format(_a);
-	var j = formats.ijk.format(_b);
-	var k = formats.ijk.format(_c);
-	writeBlock(modals.motion.format(0), x, y, z, "I" + i, "J" + j, "K" + k);
+		forceXYZ();
+		var x = outputs.x.format(_x);
+		var y = outputs.y.format(_y);
+		var z = outputs.z.format(_z);
+		var i = formats.ijk.format(_a);
+		var j = formats.ijk.format(_b);
+		var k = formats.ijk.format(_c);
+		writeBlock(modals.motion.format(0), x, y, z, "I" + i, "J" + j, "K" + k);
 	}
 	forceFeed();
 }
 
-function onLinear5D(_x, _y, _z, _a, _b, _c, feed) {
+function onLinear5D(_x: number,_y: number,_z: number,_a: number,_b: number,_c: number,feed: number) {
 	if (pendingRadiusCompensation >= 0) {
 	error(localize("Radius compensation cannot be activated/deactivated for 5-axis move."));
 	return;
@@ -1891,29 +1894,29 @@ function onCircular(clockwise, cx, cy, cz, x, y, z, feed) {
 	}
 }
 
-var currentCoolantMode = COOLANT_DISABLED;
+var currentCoolantMode = CONSTANT.COOLANT.DISABLED;
 
-function setCoolant(coolant: COOLANT) {
+function setCoolant(coolant: CONSTANT.COOLANT) {
 	if (isProbeOperation()) { // avoid coolant output for probing
-		coolant = COOLANT_DISABLED;
+		coolant = CONSTANT.COOLANT.DISABLED;
 	}
 
 	if (coolant == currentCoolantMode) {
 		return; // coolant is already active
 	}
 	
-	if (coolant == COOLANT_DISABLED) {
-		writeBlock(formats.m.format((currentCoolantMode == COOLANT_THROUGH_TOOL) ? 89 : 9));
-		currentCoolantMode = COOLANT_DISABLED;
+	if (coolant == CONSTANT.COOLANT.DISABLED) {
+		writeBlock(formats.m.format((currentCoolantMode == CONSTANT.COOLANT.THROUGH_TOOL) ? 89 : 9));
+		currentCoolantMode = CONSTANT.COOLANT.DISABLED;
 		return;
 	}
 
 	var m;
 	switch (coolant) {
-		case COOLANT_FLOOD:
+		case CONSTANT.COOLANT.FLOOD:
 			m = 8;
 			break;
-		case COOLANT_THROUGH_TOOL:
+		case CONSTANT.COOLANT.THROUGH_TOOL:
 			m = 88;
 			break;
 		default:
@@ -1937,35 +1940,35 @@ var mapCommand = {
 	COMMAND_ORIENTATE_SPINDLE:19
 };
 
-function onCommand(command: COMMAND) {
+function onCommand(command: CONSTANT.COMMAND) {
 	switch (command) {
-	case COMMAND_COOLANT_OFF:
-		setCoolant(COOLANT_DISABLED);
-		return;
+		case 1:
+			setCoolant(CONSTANT.COOLANT.DISABLED);
+			return;
 	case RECORD_CIRCULAR://////////////REMOVE /  /.............
 		return;
-	case COMMAND_COOLANT_ON:
+	case CONSTANT.COMMAND.COOLANT_ON:
 		setCoolant(COOLANT_FLOOD);
 	return;
-	case COMMAND_STOP:
+	case CONSTANT.COMMAND.STOP:
 		writeBlock(formats.m.format(0));
 		forceSpindleSpeed = true;
 	return;
-	case COMMAND_START_SPINDLE:
-		onCommand(tool.clockwise ? COMMAND_SPINDLE_CLOCKWISE : COMMAND_SPINDLE_COUNTERCLOCKWISE);
+	case CONSTANT.COMMAND.START_SPINDLE:
+		onCommand(tool.clockwise ? CONSTANT.COMMAND.SPINDLE_CLOCKWISE : CONSTANT.COMMAND.SPINDLE_COUNTERCLOCKWISE);
 		return;
-	case COMMAND_LOCK_MULTI_AXIS:
+	case CONSTANT.COMMAND.LOCK_MULTI_AXIS:
 		return;
-	case COMMAND_UNLOCK_MULTI_AXIS:
+	case CONSTANT.COMMAND.UNLOCK_MULTI_AXIS:
 		return;
-	case COMMAND_START_CHIP_TRANSPORT:
+	case CONSTANT.COMMAND.START_CHIP_TRANSPORT:
 		return;
-	case COMMAND_STOP_CHIP_TRANSPORT:
+	case CONSTANT.COMMAND.STOP_CHIP_TRANSPORT:
 		return;
-	case COMMAND_BREAK_CONTROL:
+	case CONSTANT.COMMAND.BREAK_CONTROL:
 		if (!toolChecked) { // avoid duplicate COMMAND_BREAK_CONTROL
 			//onCommand(COMMAND_STOP_SPINDLE);
-			onCommand(COMMAND_COOLANT_OFF);
+			onCommand(CONSTANT.COMMAND.COOLANT_OFF);
 			writeBlock(formats.g.format(53), "Z" + formats.xyz.format(0), formats.m.format(19)); // retract
 			writeBlock(formats.g.format(8), formats.p.format(0)); 
 			writeBlock(
@@ -1978,7 +1981,7 @@ function onCommand(command: COMMAND) {
 			toolChecked = true;
 		}
 	return;
-	case COMMAND_TOOL_MEASURE:
+	case CONSTANT.COMMAND.TOOL_MEASURE:
 	return;
 	}
 	
@@ -1996,7 +1999,7 @@ function onSectionEnd() {
 	if ((((getCurrentSectionId() + 1) >= getNumberOfSections()) ||
 		(tool.number != getNextSection().getTool().number)) &&
 		tool.breakControl) {
-	onCommand(COMMAND_BREAK_CONTROL);
+	onCommand(CONSTANT.COMMAND.BREAK_CONTROL);
 	} else {
 	toolChecked = false;
 	}
@@ -2014,7 +2017,7 @@ function onClose() {
 	//writeln("");
 	optionalSection = false;
 
-	onCommand(COMMAND_COOLANT_OFF);
+	onCommand(CONSTANT.COMMAND.COOLANT_OFF);
 	writeBlock(modals.feed.format(0),formats.g.format(49)); 
 	writeBlock(formats.g.format(53), "Z" + formats.xyz.format(0), formats.m.format(19)); // retract
 	retracted = true;
@@ -2045,8 +2048,8 @@ function onClose() {
 		writeBlock(modals.abs.format(90), formats.g.format(53), modals.motion.format(0), homeX, homeY);
 	}
 
-	onImpliedCommand(COMMAND_END);
-	onImpliedCommand(COMMAND_STOP_SPINDLE);
+	onImpliedCommand(CONSTANT.COMMAND.END);
+	onImpliedCommand(CONSTANT.COMMAND.STOP_SPINDLE);
 	writeBlock(formats.m.format(30)); // stop program, spindle stop, coolant off
 	writeln("%");
 }
