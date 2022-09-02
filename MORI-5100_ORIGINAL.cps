@@ -119,40 +119,36 @@ var ANGLE_PROBE_USE_ROTATION = 1;
 var ANGLE_PROBE_USE_CAXIS = 2;
 
 // collected state
-var sequenceNumber: number;
-var currentWorkOffset: number;
+var sequenceNumber;
+var currentWorkOffset;
 var optionalSection = false;
 var forceSpindleSpeed = false;
 var activeMovements; // do not use by default
 var currentFeedId;
 var g68RotationMode = 0;
-var angularProbingMode: number;
+var angularProbingMode;
 var now = new Date ();
-var wfo: number;
-//([A-Z]+) ([A-Z_]+)([,\)])
-//$2: $1$3
+var wfo;
 
-//([A-Z]*) \t([A-Z]+) (\([A-Z,_ ]*\))
-//$2$3: $1;
 /**
   Writes the specified block.
 */
-function writeBlock(...args:string[]) {//THIS IS WHAT ERRORS
+function writeBlock() {
   if (properties.showSequenceNumbers) {
-    if (optionalSection) {/// PUT'S A SLASH IN FRONT OF BLOCK TO DELETE IT. OPTIONAL ALWAYS MEANS DELETE.
-      var text = formatWords(args);
+    if (optionalSection) {
+      var text = formatWords(arguments);
       if (text) {
-        writeWords(["/", "N" + sequenceNumber].concat(text));
+        writeWords("/", "N" + sequenceNumber, text);
       }
     } else {
-      writeWords2("N" + sequenceNumber,args);
+      writeWords2("N" + sequenceNumber, arguments);
     }
     sequenceNumber += properties.sequenceNumberIncrement;
   } else {
     if (optionalSection) {
-      writeWords2("/",args);
+      writeWords2("/", arguments);
     } else {
-      writeWords(args);
+      writeWords(arguments);
     }
   }
 }
@@ -160,26 +156,26 @@ function writeBlock(...args:string[]) {//THIS IS WHAT ERRORS
 /**
   Writes the specified optional block.
 */
-function writeOptionalBlock(...args:string[]) {
+function writeOptionalBlock() {
   if (properties.showSequenceNumbers) {
-    var words = formatWords(...args);
+    var words = formatWords(arguments);
     if (words) {
       writeWords("/", "N" + sequenceNumber, words);
       sequenceNumber += properties.sequenceNumberIncrement;
     }
   } else {
-    writeWords2("/", ...args);
+    writeWords2("/", arguments);
   }
 }
 
-function formatComment(text: Value) {
+function formatComment(text) {
   return "(" + filterText(String(text).toUpperCase(), permittedCommentChars).replace(/[\(\)]/g, "") + ")";
 }
 
 /**
   Output a comment.
 */
-function writeComment(text: string) {
+function writeComment(text) {
   writeln(formatComment(text));
 }
 
@@ -674,7 +670,7 @@ function isProbeOperation() {
 
 var probeOutputWorkOffset = 1;
 
-function onParameter(name: string, value) {
+function onParameter(name, value) {
   if (name == "probe-output-work-offset") {
     probeOutputWorkOffset = (value > 0) ? value : 1;
   }

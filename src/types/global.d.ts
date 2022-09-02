@@ -20,17 +20,16 @@ declare class RANGE {
         getMaximum(): number;
         getSpan(): number;
         getMiddle(): number;
-        grow(offset: Number): void;
-        reduce(offset: Number): void;
-        translate(offset: Number): void;
-        expandTo(value: Number): void;
+        grow(offset: number): void;
+        reduce(offset: number): void;
+        translate(offset: number): void;
+        expandTo(value: number): void;
         expandToRange(value: RANGE): void;
-        getU(value: Number): number;
-        isWithin(value: Number): boolean;
-        clamp(value: Number): number;
+        getU(value: number): number;
+        isWithin(value: number): boolean;
+        clamp(value: number): number;
         toString(): string;
 }
-
 declare class Vector {
         x: number;//The X coordinate.
         y: number;//The Y coordinate.
@@ -89,6 +88,329 @@ declare interface VectorPair {
         first: Vector,
         second: Vector,
 }
+declare class BoundingBox {
+	lower: Vector;
+	upper: Vector;
+
+	constructor();
+	constructor(a: Vector,b: Vector);
+
+	expandTo(point: Vector): void;
+	expandToBox(box: BoundingBox): void;
+	getRayIntersection(origin: Vector,): VectorPair;
+}
+declare class Matrix {
+	n1: number//The 1-norm.
+	n2: number//The 2-norm.
+	negated: Matrix//The negated matrix.
+	transposed: Matrix//The transposed matrix(equal to the inverse rotations: for): void;.
+	up: Vector//The up vector.
+	right: Vector//The right vector.
+	forward: Vector//The forward vector.
+	eulerXZX: Vector//Euler angles in radians for XZX static/world convention.
+	eulerYXY: Vector//Euler angles in radians for YXY static/world convention.
+	eulerZYZ: Vector//Euler angles in radians for ZYZ static/world convention.
+	eulerXZX_R: Vector//Euler angles in radians for XZX body convention.
+	eulerYXY_R: Vector//Euler angles in radians for YXY body convention.
+	eulerZYZ_R: Vector//Euler angles in radians for ZYZ body convention.
+	eulerXZY: Vector//Euler angles in radians for XZY static/world convention.
+	eulerYXZ: Vector//Euler angles in radians for YXZ static/world convention.
+	eulerZYX: Vector//Euler angles in radians for ZYX static/world convention.
+	eulerYZX_R: Vector//Euler angles in radians for YZX body convention.
+	eulerZXY_R: Vector//Euler angles in radians for ZXY body convention.
+	eulerXYZ_R: Vector//Euler angles in radians for XYZ body convention.
+	eulerXYX: Vector//Euler angles in radians for XYX static/world convention.
+	eulerYZY: Vector//Euler angles in radians for YZY static/world convention.
+	eulerZXZ: Vector//Euler angles in radians for ZXZ static/world convention.
+	eulerXYX_R: Vector//Euler angles in radians for XYX body convention.
+	eulerYZY_R: Vector//Euler angles in radians for YZY body convention.
+	eulerZXZ_R: Vector//Euler angles in radians for ZXZ body convention.
+	eulerXYZ: Vector//Euler angles in radians for XYZ static/world convention.
+	eulerYZX: Vector//Euler angles in radians for YZX static/world convention.
+	eulerZXY: Vector//Euler angles in radians for ZXY static/world convention.
+	eulerZYX_R: Vector//Euler angles in radians for ZYX body convention.
+	eulerXZY_R: Vector//Euler angles in radians for XZY body convention.
+	eulerYXZ_R: Vector//Euler angles in radians for YXZ body convention.
+	
+	constructor(scale: number);
+	constructor(right: Vector, up: Vector, forward: Vector);
+	constructor(m: number[]);
+	constructor(axis: Vector, angle: number);
+	
+	static getAxisRotation(axis: Vector, angle: number): Matrix
+	static getXRotation(angle: number): Matrix
+	static getYRotation(angle: number): Matrix
+	static getZRotation(angle: number): Matrix
+	static getXYZRotation(abc: Vector): Matrix
+	static getEulerRotation(convention: number, angles: Vector): Matrix
+	static getEulerXZXRotation(angles: Vector): Matrix
+	static getEulerYXYRotation(angles: Vector): Matrix
+	static getEulerZYZRotation(angles: Vector): Matrix
+	static getEulerXZYRotation(angles: Vector): Matrix
+	static getEulerYXZRotation(angles: Vector): Matrix
+	static getEulerZYXRotation(angles: Vector): Matrix
+	static getEulerXYXRotation(angles: Vector): Matrix
+	static getEulerYZYRotation(angles: Vector): Matrix
+	static getEulerZXZRotation(angles: Vector): Matrix
+	static getEulerXYZRotation(angles: Vector): Matrix
+	static getEulerYZXRotation(angles: Vector): Matrix
+	static getEulerZXYRotation(angles: Vector): Matrix
+	static sum(left: Matrix, right: Matrix): Matrix
+	static diff(left: Matrix, right: Matrix): Matrix
+
+	rotateX(angle: number): void;
+	rotateY(angle: number): void;
+	rotateZ(angle: number): void;
+	getElement (row: number, column: number): number;
+	setElement (row: number, column: number, value: number): void;
+	getRow(row: number): Vector;
+	setRow (row: number, value: Vector): void;
+	getColumn(column: number): Vector;
+	setColumn (column: number, value: Vector): void;
+	getForward(): Vector;
+	setForward(value: Vector): void;
+	getUp(): Vector;
+	setUp(value: Vector): void;
+	getRight(): Vector;
+	setRight(value: Vector): void;
+	getTiltAndTilt (primary: number, secondary: number): Vector;
+	getTurnAndTilt (primary: number, secondary: number): Vector;
+	getEuler(convention: number): Vector;
+	getEuler2(convention: number): Vector;
+	getEulerZXZ(): Vector;
+	getEulerZYZ(): Vector;
+	getEulerXYZ(): Vector;
+	getEulerZYX(): Vector;
+	clamp(epsilon: number): void;
+	isZero(): boolean;
+	isIdentity(): boolean;
+	getN1(): number;
+	getN2(): number;
+	normalize(): void;
+	add(right: Matrix): void;
+	subtract(right: Matrix): void;
+	negate(): void;
+	getNegated(): Matrix;
+	transpose(): void;
+	getTransposed(): Matrix;
+	multiply(right: number): Matrix;
+	multiply(right: Matrix): Matrix;
+	multiply(right: Vector): Vector;
+	toString(): string;
+}
+declare interface Recorda {
+	isValid(): boolean;
+	getId(): number;
+	getType(): number;
+	getCategories(): number;
+	isMotion(): boolean;
+	isCycle(): boolean;
+	getCycleType(): string;
+	isParameter(): boolean;
+	getParameterName(): string;
+	getParameterValue(): Value;
+}
+declare interface Specifiers {
+	decimals: number;
+	trim: boolean;
+	trimLeadZero: boolean;
+	forceSign: boolean;
+	forceDecimal: boolean;
+	zeropad: boolean;
+	width: number;
+	seperator: string;
+	cyclicLimit: number;
+	cyclicSign: number;
+	scale: number;
+	offset: number;
+	prefix: string;
+	suffix: string;
+	inherit: Format;
+}
+declare class Format {
+	constructor(specifiers: Specifiers);
+
+	format(value: number): String;
+	getResultingValue(value: number): number;
+	getError(value: number): number;
+	isSignificant(value: number): boolean;
+	areDifferent(a: number,b: number): boolean;
+	getMinimumValue(): number;
+}
+declare class FormatNumber {
+	constructor();
+
+	getDecimalSymbol(): number;
+	setDecimalSymbol(decimalSymbol: number): void;
+	getZeroPad(): boolean;
+	setZeroPad(zeroPad: boolean): void;
+	getForceSign(): boolean;
+	setForceSign(forceSign: boolean): void;
+	getForceDecimal(): boolean;
+	setForceDecimal(forceDecimal: boolean): void;
+	getWidth(): number;
+	setWidth(width: number): void;
+	getNumberOfDecimals(): number;
+	setNumberOfDecimals(numberOfDecimals: number): void;
+	getTrimZeroDecimals(): boolean;
+	setTrimZeroDecimals(trimZeroDecimals: boolean): void;
+	getTrimLeadZero(): boolean;
+	setTrimLeadZero(trimLeadZero: boolean): void;
+	remap(value: number): number;
+	unmap(value: number): number;
+	getCyclicLimit(): number;
+	getCyclicSign(): number;
+	setCyclicMapping(limit: number, sign: number): void;
+	getScale(): number;
+	setScale(scale: number): void;
+	getOffset(): number;
+	setOffset(offset: number): void;
+	getPrefix(): string;
+	setPrefix(prefix: string): void;
+	getSuffix(): string;
+	setSuffix(suffix: string): void;
+	getBase(): number;
+	setBase(base: number): void;
+	getMinimum(): number;
+	setMinimum(value: number): void;
+	getMaximum(): number;
+	setMaximum(value: number): void;
+	getMinDigitsLeft(): number;
+	setMinDigitsLeft(value: number): void;
+	getMinDigitsRight(): number;
+	setMinDigitsRight(value: number): void;
+	getType(): number;
+	setType(type: number): void;
+	format(value: number): string;
+	isSignificant(value: number): boolean;
+	areDifferent(a: number, b: number): boolean;
+	getMinimumValue(): number;
+	getResultingValue(value: number): number;
+	getError(value: number): number;
+}
+declare class Modal {
+	constructor(specifiers: Specifiers,format: Format);
+	
+	format(value: Value): string;
+	getPrefix(): Value;
+	setPrefix(prefix: Value): void;
+	getSuffix(): Value;
+	setSuffix(suffix: Value): void;
+	reset(): void;
+	getCurrent(): Value;
+}
+declare class Variable {
+	constructor(specifiers: any,format: Format);
+
+	format(value: number): string;
+	getPrefix(): Value;
+ 	setPrefix(prefix: Value): void;
+ 	disable(): void;
+ 	reset(): void;
+	getCurrent(): Value;
+}
+declare class IncrementalVariable {
+	constructor(specifiers: any,format: Format);
+
+	format(value: number): string;
+	getPrefix(): Value;
+ 	setPrefix(prefix: Value): void;
+ 	disable(): void;
+ 	reset(): void;
+	getCurrent(): Value;
+}
+declare class ModalGroup {	
+	constructor();
+
+	setStrict(strict: Boolean): void;
+	setAutoReset(autoreset: Boolean): void;
+	setLogUndefined(logundefined: Boolean): void;
+	getNumberOfGroups(): number;
+	getNumberOfCodes(): number;
+	getNumberOfCodesInGroup(group: number): number;
+	isCodeDefined(code: number): Boolean;
+	isActiveCode(code: number): Boolean;
+	makeActiveCode(code: number): void;
+	getActiveCode(group: number): number;
+	hasActiveCode(group: number): Boolean;
+	reset(): void;
+	resetGroup(group: number): number;
+	createGroup(): number;
+	removeCode(code: number): void;
+	addCode (group: number, code: number): void;
+	isGroup(group: number): Boolean;
+	getGroup(code: number): number;
+	inSameGroup(a: number, b: number): Boolean;
+	isEnabled(): Boolean;
+	enable(): void;
+	disable(): void;
+	setForce(force: Boolean): void;
+	setFormatNumber(formatNumber: FormatNumber): void;
+	setPrefix(prefix: String): void;
+	setSuffix(suffix: String): void;
+	format(code: number): String;
+}
+declare class OutputVariable {
+	constructor(specifiers: Specifiers, format: Format)
+
+	disable(): void;
+	enable(): void;
+	format(value: Number): String;
+	getControl(): Value;
+	getCurrent(): Value;
+	getCyclicLimit(): Value;
+	getCyclicSign(): Value;
+	getFormat(): FormatNumber;
+	getPrefix(): Value;
+	getResultingValue(): Value;
+	getSuffix(): Value;
+	getTolerance(): Value;
+	getType(): Value;
+	isEnabled(): Boolean;
+	setControl(control: Value): void;
+	setCurrent(current: Value): void;
+	setCyclicLimit(cyclicLimit: Value): void;
+	setCyclicSign(cyclicLimit: Value): void;
+	setFormat(format: Format): void;
+	setPrefix(prefix: Value): void;
+	setSuffix(suffix: Value): void;
+	setTolerance(tolerance: Value): void;
+	setType(type: Value): void;
+	reset(): void;
+	getDecimalSymbol(): String;
+	setDecimalSymbol(decimalSymbol: String): void;
+	getForceSign(): Boolean;
+	setForceSign(forceSign: Boolean): void;
+	getNumberOfDecimals(): Value;
+	setNumberOfDecimals(numberOfDecimals: Value): void;
+	getScale(): Value;
+	setScale(scale: Value): void;
+	getOffset(): Value;
+	setOffset(offset: Value): void;
+	getBase(): Value;
+	setBase(base: Value): void;
+	getMinimum(): Value;
+	setMinimum(minimum: Value): void;
+	getMaximum(): Value;
+	setMaximum(maximum: Value): void;
+	getMinDigitsLeft(): Value;
+	setMinDigitsLeft(minDigitsLeft: Value): void;
+	getMinDigitsRight(): Value;
+	setMinDigitsRight(minDigitsRight: Value): void;
+	getFormatType(): Value;
+	setFormatType(type: Value): void;
+}
+declare class ReferenceVariable {
+	constructor(specifiers: {
+		prefix?: string,
+		force?: boolean,
+	}, format: Format);
+
+	format (value: number,reference: number): string;
+	getPrefix(): Value;
+ 	setPrefix(prefix: Value): void;
+ 	disable(): void;
+}
 declare interface Section {
         unit: number;//unit). More...
         workOrigin: Vector;//The work origin in the WCS.
@@ -98,23 +420,23 @@ declare interface Section {
         workOffset: number;//The work offset corresponding to the WCS.
         probeWorkOffset: number;//The work offset corresponding to the Probe WCS.
         wcsIndex: number;//The index used in the WCS.
-        wcs: String;//The WCS.
+        wcs: string;//The WCS.
         dynamicWorkOffset: number;//the display coordinates. More...
-        axisSubstitution: Boolean;//Specifies that the section uses axis substitution.
-        axisSubstitutionRadius: Number;//Specifies the nominal axis substitution radius.
+        axisSubstitution: boolean;//Specifies that the section uses axis substitution.
+        axisSubstitutionRadius: number;//Specifies the nominal axis substitution radius.
         type: number;//Specifies the type of the section(TYPE_MILLING, TYPE_TURNING, TYPE_JET: or).
         quality: number;//Specifies the associated quality.
-        tailstock: Boolean;//Specifies that tailstock is used.
-        partCatcher: Boolean;//Specifies that part catcher should be activated if available.
+        tailstock: boolean;//Specifies that tailstock is used.
+        partCatcher: boolean;//Specifies that part catcher should be activated if available.
         spindle: number;//Specifies the active spindle.
-        properties: Map;//The operation properties.
-        strategy: String;//Specifies the strategy type of the section.
+        properties: any;//The operation properties.
+        strategy: string;//Specifies the strategy type of the section.
 
         getId(): number;
         //PostPropertyMap::getOperationProperties(): PropertyMap;
         //optional< string >getStrategy: ; ()
         getNumberOfRecords(): number;
-        getRecord(id: number): Record;
+        getRecord(id: number): Recorda;
         getJobId(): number;
         getPatternId(): number;
         getNumberOfPatternInstances(): number;
@@ -218,12 +540,68 @@ declare interface Section {
         doesToolpathFitWithinLimits(machine: MachineConfiguration,current: Vector): boolean;
         checkGroup(groups: number): boolean;
 }
+declare interface Shaft {
+	length: number;
+	maximumDiameter: number;
+
+	hasSections(): boolean;
+	getNumberOfSections(): number;
+	getMaximumDiameter(): number;
+	getTotalLength(): number;
+	getDiameter (index: number): number ;
+	getLength (index: number): number ;
+}
+declare interface Holder {
+	length: number;
+	maximumDiameter: number;
+
+	hasSections(): boolean;
+	getNumberOfSections(): number;
+	getMaximumDiameter(): number;
+	getTotalLength(): number;
+	getDiameter (index: number): number ;
+	getLength (index: number): number ;
+}
+// declare interface MachineConfigurationSpecifier {
+// 	model: string;//Specifies the machine model.
+// 	description: ;//Describes the machine configuration.
+// 	vendor: string;//Specifies the machine vendor.
+// 	vendorUrl: ;//Specifies the machine vendor link.
+// 	width: number;//Specifies the width of the machine.
+// 	depth: number;//Specifies the depth of the machine.
+// 	height: number;//Specifies the height of the machine.
+// 	weight: number;//Specifies the weight of the machine.
+// 	weightCapacity: number;//Specifies the weight capacity of the machine.
+// 	spindleAxis: number;//Specifies the spindle axis.
+// 	maximumSpindlePower: ;//Specifies the maximum spindle power.
+// 	maximumSpindleSpeed: ;//Specifies the maximum spindle speed.
+// 	collectChuck: ;//Specifies the collect chuck. Tool-holder interface.
+// 	x: ;//Specifies the X axis.
+// 	y: ;//Specifies the Y axis.
+// 	z: ;//Specifies the Z axis.
+// 	u: ;//Specifies the U axis.
+// 	v: ;//Specifies the V axis.
+// 	w: ;//Specifies the W axis.
+// }
 declare class MachineConfiguration {
+
+
         constructor();
         constructor(u: Axis);
         constructor(u: Axis,v: Axis);
         constructor(u: Axis,v: Axis,w: Axis);
     
+		static getAsSpatial(text: string): number;
+        static getAsSpatialFeedrate(text: string): number;
+        static getAsAngularFeedrate(text: string): number;
+        static getAsWeight(text: string): number;
+        static getAsPower(text: string): number;
+        static getAsAngular(text: string): number;
+        static getAsTime(text: string): number;
+        static createFromXML(xml: string): MachineConfiguration;
+        static createFromPath(path: string): MachineConfiguration;
+        static getStatusDescription(status: number): string;
+
         getXML(): string;
         getMilling(): boolean;
         setMilling(milling: boolean): void;
@@ -339,7 +717,7 @@ declare class MachineConfiguration {
         getAxisU(): Axis;
         getAxisV(): Axis;
         getAxisW(): Axis;
-        getIndexOfAxisById(id: AxisId): number;
+        getIndexOfAxisById(id: number): number;
         isMachineCoordinate(coordinate: number): boolean;
         getAxisByCoordinate(coordinate: number): Axis;
         clamp(_abc: Vector): Vector;
@@ -426,26 +804,247 @@ declare class MachineConfiguration {
         setShortestAngularRotation(shortestAngularRotation: boolean): void;
         isReceived(): boolean;
         setIsReceived(received: boolean): void;
-    
-        static getAsSpatial(text: string): number;
-        static getAsSpatialFeedrate(text: string): number;
-        static getAsAngularFeedrate(text: string): number;
-        static getAsWeight(text: string): number;
-        static getAsPower(text: string): number;
-        static getAsAngular(text: string): number;
-        static getAsTime(text: string): number;
-        static createFromXML(xml: string): MachineConfiguration;
-        static createFromPath(path: string): MachineConfiguration;
-        static getStatusDescription(status: number): string;
+}
+declare class Axis {
+	constructor()
+	constructor(_table: boolean, _axis: Vector, _offset: Vector, _coordinate: number);
+	constructor(_table: boolean, _axis: Vector, _offset: Vector, _coordinate: number, _range: Range);
+	
+	getName(): string;
+	setName(name: string): void;
+	getActuator(): number;
+	setActuator(actuator: number): void;
+	isLinear(): boolean;
+	isRotational(): boolean;
+	isAggregate(): boolean;
+	getResolution(): number;
+	setResolution(resolution: number): void;
+	clampToResolution(_value: number): number;
+	getResolutionError(_value: number): number;
+	getMaximumFeed(): number;
+	setMaximumFeed(_maximumFeed: number): void;
+	getRapidFeed(): number;
+	setRapidFeed(_rapidFeed: number): void;
+	getPreference(): number;
+	setPreference(preference: number): void;
+	getReset(): number;
+	setReset(reset: number): void;
+	isEnabled(): boolean;
+	isHead(): boolean;
+	isTable(): boolean;
+	getEffectiveAxis(): Vector;
+	getAxis(): Vector;
+	getOffset(): Vector;
+	getHomePosition(): number;
+	getDisplacement(): number;
+	isCyclic(): boolean;
+	isTCPEnabled(): boolean;
+	getRange(): Range;
+	getCoordinate(): number;
+	isSupported(value: number): boolean;
+	clamp(value: number): number;
+	reduce(value: number): number;
+	remapToRange(angle: number): number;
+	remapToRange2 (angle: number, current: number): number;
+	getAxisRotation(position: number): Matrix;
+}
+declare class Tool {
+	number: number;//The tool number.
+	turret: number;//The turret.
+	diameterOffset: number;//The diameter offset (used milling: for).
+	lengthOffset: number;//The length offset (used milling: for).
+	compensationOffset: number;//The compensation offset (used turning: for).
+	manualToolChange: boolean;//True if tool must be manually changed.
+	breakControl: boolean;//True if break control is enabled.
+	liveTool: boolean;//True if the tool is live - otherwise it is static.
+	holdernumber: number;//number identifying the holder.
+	spindleMode: number;//The spindle mode.
+	spindleRPM: number;//The spindle speed in RPM. Positive for clockwise direction.
+	rampingSpindleRPM: number;//The spindle speed in RPM for ramping. Positive for clockwise direction.
+	surfaceSpeed: number;//The surface speed(CSS): void;.
+	maximumSpindleSpeed: number;//The maximum spindle speed(RPM): void; when using surface speed(CSS): void;.
+	numberOfFlutes: number;//The number of flutes.
+	threadPitch: number;//The number of thread per unit of length.
+	coolant: number;//The coolant.
+	material: number;//The material.
+	comment: string;//Comment.
+	vendor: string;//The vendor.
+	productId: string;//The product id.
+	unit: number;//The unit.
+	type: number;//The tool type.
+	diameter: number;//The diameter.
+	cornerRadius: number;//The corner radius.
+	taperAngle: number;//The taper angle.
+	fluteLength: number;//The flute length.
+	shoulderLength: number;//The shoulder length.
+	shaftDiameter: number;//The shaft diameter.
+	bodyLength: number;//The body length.
+	overallLength: number;//The entire length of the tool.
+	shaft: Shaft;//The tool shaft.
+	holderTipDiameter: number;//The holder tip diameter.
+	holderDiameter: number;//The holder diameter.
+	holderLength: number;//The holder length.
+	holder: Holder;//The tool holder.
+	boringBarOrientation: number;//The boring bar orientation in radians.
+	inscribedCircleDiameter: number;//The inscribed circle diameter for turning tool.
+	edgeLength: number;//The edge length for turning tool.
+	noseRadius: number;//The nose radius for turning tools.
+	reliefAngle: number;//The relief angle in degrees.
+	thickness: number;//The turning tool thickness;.
+	grooveWidth: number;//The groove tool width.
+	crossSection: string;//The cross section type for turning tools.
+	tolerance: string;//The tolerance for turning tools.
+	pitch: number;//The thread pitch for turning tools.
+	hand: string;//The holder hand. Left, Right, or Neutral.
+	clamping: string;//Clamping for turning tools.
+	jetDistance: number;//The jet distance. More...
+	jetDiameter: number;//The jet diameter.
+	kerfWidth: number;//The kerf width.
+	machineQualityControl: string;//The machine quality control.
+	cutHeight: number;//The cut height.
+	pierceHeight: number;//The pierce height.
+	pressure: number;//The pressure.
+	pierceTime: number;//The pierce time.
+	abrasiveFlowRate: number;//The abrasive flow rate.
+	piercePower: number;//The pierce power.
+	cutPower: number;//The cut power.
+	assistGas: string;//The assist gas.
+	
+	getToolId(): string;
+	getnumber(): number;
+	getDiameterOffset(): number;
+	getLengthOffset(): number;
+	getSecondaryLengthOffset(): number;
+	isTurningTool(): boolean;
+	isJetTool(): boolean;
+	getHoldernumber(): number;
+	getSpindleMode(): number;
+	getSpindleRPM(): number;
+	getRampingSpindleRPM(): number;
+	isClockwise(): boolean;
+	getSurfaceSpeed(): number;
+	getMaximumSpindleSpeed(): number;
+	getnumberOfFlutes(): number;
+	getThreadPitch(): number;
+	getTappingFeedrate(): number;
+	isDrill(): boolean;
+	getCoolant(): number;
+	getMaterial(): number;
+	getDescription(): string;
+	getComment(): string;
+	getVendor(): string;
+	getProductId(): string;
+	getHolderDescription(): string;
+	getHolderComment(): string;
+	getHolderVendor(): string;
+	getHolderProductId(): string;
+	getAggregateId(): string;
+	getUnit(): number;
+	getType(): number;
+	getDiameter(): number;
+	getTipDiameter(): number;
+	getCornerRadius(): number;
+	getTaperAngle(): number;
+	getFluteLength(): number;
+	getShoulderLength(): number;
+	getShaftDiameter(): number;
+	getBodyLength(): number;
+	getOverallLength(): number;
+	getShaft(): Shaft;
+	getJetDistance(): number;
+	getJetDiameter(): number;
+	getKerfWidth(): number;
+	getMachineQualityControl(): string;
+	getCutHeight(): number;
+	getPierceHeight(): number;
+	getPressure(): number;
+	getPierceTime(): number;
+	getAbrasiveFlowRate(): number;
+	getPiercePower(): number;
+	getCutPower(): number;
+	getAssistGas(): string;
+	getHolderTipDiameter(): number;
+	getHolderDiameter(): number;
+	getHolderLength(): number;
+	getHolder(): Holder;
+	getBoringBarOrientation(): number;
+	getCompensationOffset(): number;
+	getSecondaryCompensationOffset(): number;
+	getManualToolChange(): boolean;
+	getBreakControl(): boolean;
+	isLiveTool(): boolean;
+	getTurret(): number;
+	getInsertType(): number;
+	getHolderType(): number;
+	getCompensationMode(): number;
+	getCompensationDisplacement(): Vector;
+	getExtent(includeHolder: boolean): BoundingBox;
+	getCutterProfile(): Curve;
+	getHolderProfile(): Curve;
+	getCutterProfileAsSVGPath(): string;
+	getHolderProfileAsSVGPath(): string;
+	//getCutterAsMesh(tolerance: number): Mesh;
+	//getHolderAsMesh(tolerance: number): Mesh;
+}
+declare interface MachineParameters {
+	spindleOrientation: number;
+	chipBreakingDistance: number;
+	drillingSafeDistance: number;
+	spindleSpeedDwell: number;
+}
+declare class CircularMotion {
+	getPositionU(u: number): Vector;
+	getOffset(): number;
+}
+declare class CurveEntity {
+	arc: boolean;
+	clockwise: boolean;
+	start: Vector;
+	center: Vector;
+	end: Vector;
+
+	constructor();
+
+	static getLine(start: Vector,end: Vector): CurveEntity;
+	static getArc(start: Vector,end: Vector,center: Vector,clockwise: boolean): CurveEntity;
+
+	getLength(): number;
+	getRadius(): number;
+	isBigArc(): boolean;
+	getSweep(): number;
+	reverse(): void;
+	translate(offset: Vector): void;
+}
+declare interface Curve {
+	getNumberOfEntities(): number;
+	getEntity(index: number): CurveEntity;
+	isClosed(): boolean;
+	hasArcs(): boolean;
+	getLength(): number;
+	getExtent(): BoundingBox;
+	getLinearize(tolerance: number): Curve;
+}
+declare interface ToolTable {
+	getNumberOfTools(): number,
+	getTool(index: number): Tool,	
+}
+declare interface MoveLength {
+	linear: number;
+	radial: number;
+	radialToolTip: number;
+
+	getLinearMoveLength(): number;
+	getRadialMoveLength(): number;
+	getRadialToolTipMoveLength(): number;
 }
 
 declare function getMachineConfiguration(): MachineConfiguration;
 declare function setMachineConfiguration(machine: MachineConfiguration): void;
 declare function getMultiAxisMoveLength(x: number,y: number,z: number,a: number,b: number,c: number): MoveLength;
 declare function optimizeMachineAngles(): void;
-declare function optimizeMachineAngles2(optimizeType: r): void;
+declare function optimizeMachineAngles2(optimizeType: number): void;
 declare function optimizeMachineAnglesByMachine(machine: MachineConfiguration,optimizeType: number): void;
-declare function isSectionSpecialCycle(uri: g): boolean;
+declare function isSectionSpecialCycle(uri: string): boolean;
 declare function setSectionSpecialCycle(uri: string,specialCycle: boolean): void;
 declare function getProduct(): string;
 declare function getProductUri(): string;
@@ -453,10 +1052,10 @@ declare function getProductUrl(): string;
 declare function getVendor(): string;
 declare function getVendorUrl(): string;
 declare function getVersion(): string;
-declare function openUrl(url: g): void;
-declare function printDocument(path: g): boolean;
+declare function openUrl(url: string): void;
+declare function printDocument(path: string): boolean;
 declare function printDocumentTo(path: string,printerName: string): boolean;
-declare function createToolRenderer(): ToolRenderer;
+//declare function createToolRenderer(): ToolRenderer;
 declare function invokeOnRapid(x: number,y: number,z: number): boolean;
 declare function invokeOnRapid5D(x: number,y: number,z: number,dx: number,dy: number,dz: number): boolean;
 declare function invokeOnLinear(x: number,y: number,z: number,feedrate: number): boolean;
@@ -466,40 +1065,40 @@ declare function activatePolarMode(tolerance: number,currentAngle: number,polarD
 declare function deactivatePolarMode(): void;
 declare function isPolarModeActive(): boolean;
 declare function getPolarPosition(x: number,y: number,z: number): VectorPair;
-declare function setCurrentPositionAndDirection(posDir: r): void;
-declare function setExitCode(code: r): void;
-declare function error(message: g): void;
-declare function warning(message: g): void;
+declare function setCurrentPositionAndDirection(posDir: VectorPair): void;
+declare function setExitCode(code: number): void;
+declare function error(message: string): void;
+declare function warning(message: string): void;
 declare function warningOnce(message: string,id: number): void;
-declare function log(message: g): void;
+declare function log(message: string): void;
 declare function getCurrentNCLocation(): string;
 declare function getSystemUnit(): number;
 declare function getPlatform(): string;
-declare function hasSymbol(symbol: r): boolean;
-declare function isTextSupported(text: g): boolean;
+declare function hasSymbol(symbol: number): boolean;
+declare function isTextSupported(text: string): boolean;
 declare function getCodePage(): number;
-declare function setCodePage(name: g): void;
-declare function write(message: g): void;
-declare function writeln(message: g): void;
+declare function setCodePage(name: string): void;
+declare function write(message: string): void;
+declare function writeln(message: string): void;
 declare function getWordSeparator(): string;
-declare function setWordSeparator(message: g): void;
-declare function writeWords(message: string): void;
-declare function writeWords2(message: string): void;
-declare function formatWords(message: g): string;
-declare function subst(message: string): string;
+declare function setWordSeparator(message: string): void;
+declare function writeWords(strings: string[]): void;
+declare function writeWords2(message: string,strings: string[]): void;
+declare function formatWords(strings: string[]): string;
+declare function subst(...strings: string[]): string;
 declare function getLangId(): string;
 declare function isSupportedText(message: string): boolean;
-declare function localize(message: g): string;
+declare function localize(message: string): string;
 declare function localize2(section: string,message: string): string;
-declare function loadLocale(langId: g): boolean;
-declare function include(path: g): void;
-declare function findFile(path: g): string;
+declare function loadLocale(langId: string): boolean;
+declare function include(path: string): void;
+declare function findFile(path: string): string;
 declare function getHeader(): string;
 declare function getHeaderVersion(): string;
 declare function getHeaderCommit(): string;
 declare function getHeaderDate(): string;
 declare function getHeaderDate2(): Date;
-declare function getHeaderSnippet(keyword: g): string;
+declare function getHeaderSnippet(keyword: string): string;
 declare function getIntermediatePath(): string;
 declare function getOutputPath(): string;
 declare function getSimulationStreamPath(): string;
@@ -508,78 +1107,78 @@ declare function getConfigurationPath(): string;
 declare function getPostProcessorFolder(): string;
 declare function getPostProcessorPath(): string;
 declare function getCascadingPath(): string;
-declare function setCascadingPath(string): void;
+declare function setCascadingPath(path: string): void;
 declare function getSecurityLevel(): number;
 declare function exportNCAs(path: string,format: string): void;
 declare function execute(path: string,arguments: string,hide: boolean,workingFolder: string): number;
 declare function executeNoWait(path: string,arguments: string,hide: boolean,workingFolder: string): void;
-declare function setEOL(eol: g): void;
+declare function setEOL(eol: string): void;
 declare function isRedirecting(): boolean;
 declare function closeRedirection(): void;
-declare function redirectToFile(path: g): void;
+declare function redirectToFile(path: string): void;
 declare function redirectToBuffer(): void;
 declare function getRedirectionBuffer(): string;
-declare function getRedirectionBuffer2(clear: n): string;
-declare function registerPostProcessing(path: g): void;
+declare function getRedirectionBuffer2(clear: boolean): string;
+declare function registerPostProcessing(path: string): void;
 declare function getWorkpiece(): BoundingBox;
 declare function getFixture(): BoundingBox;
 declare function getMachineConfigurations(): string;
-declare function getMachineConfigurationByName(name: g): MachineConfiguration;
-declare function loadMachineConfiguration(path: g): MachineConfiguration;
+declare function getMachineConfigurationByName(name: string): MachineConfiguration;
+declare function loadMachineConfiguration(path: string): MachineConfiguration;
 declare function isInteractionAllowed(): boolean;
 declare function alert(title: string,description: string): void;
 declare function promptKey(title: string,description: string): string;
 declare function promptKey2(title: string,description: string,accept: string): string;
 declare function promptKey3(title: string,description: string,accept: string,keys: string): string;
 declare function promptText(title: string,description: string): string;
-declare function getAsInt(text: g): number;
-declare function getAsFloat(text: g): number;
+declare function getAsInt(text: string): number;
+declare function getAsFloat(text: string): number;
 declare function isSafeText(text: string,permitted: string): boolean;
 declare function filterText(text: string,keep: string): string;
 declare function translateText(text: string,src: string,dest: string): string;
 declare function loadText(url: string,encoding: string): string;
 declare function getOutputUnit(): number;
-declare function setOutputUnit(unit: r): void;
+declare function setOutputUnit(unit: number): void;
 declare function getDogLeg(): boolean;
-declare function setDogLeg(dogLeg: n): void;
+declare function setDogLeg(dogLeg: boolean): void;
 declare function getRotation(): Matrix;
-declare function setRotation(rotation: x): void;
+declare function setRotation(rotation: Matrix): void;
 declare function cancelRotation(): void;
 declare function getTranslation(): Vector;
 declare function cancelTransformation(): void;
-declare function setTranslation(translation: r): void;
+declare function setTranslation(translation: Vector): void;
 declare function cancelTranslation(): void;
-declare function getFramePosition(position: r): Vector;
-declare function getFrameDirection(direction: r): Vector;
-declare function getSectionFramePosition(framePosition: r): Vector;
-declare function getSectionFrameDirection(frameDirection: r): Vector;
+declare function getFramePosition(position: Vector): Vector;
+declare function getFrameDirection(direction: Vector): Vector;
+declare function getSectionFramePosition(framePosition: Vector): Vector;
+declare function getSectionFrameDirection(frameDirection: Vector): Vector;
 declare function getHighFeedMapping(): number;
-declare function setHighFeedMapping(mode: r): void;
+declare function setHighFeedMapping(mode: number): void;
 declare function getHighFeedrate(): number;
-declare function setHighFeedrate(feedrate: r): void;
-declare function getGlobalPosition(p: r): Vector;
-declare function getWCSPosition(p: r): Vector;
-declare function getSectionPosition(p: r): Vector;
+declare function setHighFeedrate(feedrate: number): void;
+declare function getGlobalPosition(p: Vector): Vector;
+declare function getWCSPosition(p: Vector): Vector;
+declare function getSectionPosition(p: Vector): Vector;
 declare function getCurrentGlobalPosition(): Vector;
 declare function getCurrentPosition(): Vector;
-declare function setCurrentPosition(currentPosition: r): void;
-declare function setCurrentPositionX(x: r): void;
-declare function setCurrentPositionY(y: r): void;
-declare function setCurrentPositionZ(z: r): void;
+declare function setCurrentPosition(currentPosition: Vector): void;
+declare function setCurrentPositionX(x: number): void;
+declare function setCurrentPositionY(y: number): void;
+declare function setCurrentPositionZ(z: number): void;
 declare function getCurrentDirection(): Vector;
-declare function setCurrentDirection(currentDirection: r): void;
+declare function setCurrentDirection(currentDirection: Vector): void;
 declare function getCurrentSpindleSpeed(): number;
-declare function setCurrentSpindleSpeed(spindleSpeed: r): void;
-declare function setCurrentABC(abc: r): void;
+declare function setCurrentSpindleSpeed(spindleSpeed: number): void;
+declare function setCurrentABC(abc: Vector): void;
 declare function skipRemainingSection(): void;
 declare function isClockwiseSpindleDirection(): boolean;
 declare function isSpindleActive(): boolean;
 declare function isCoolantActive(): boolean;
-declare function isProbeOperation(section: n): boolean;
-declare function isInspectionOperation(section: n): boolean;
-declare function isDepositionOperation(section: n): boolean;
+declare function isProbeOperation(section: Section): boolean;
+declare function isInspectionOperation(section: Section): boolean;
+declare function isDepositionOperation(section: Section): boolean;
 declare function isDrillingCycle(section: Section,checkBoringCycles: boolean): boolean;
-declare function isTappingCycle(section: n): boolean;
+declare function isTappingCycle(section: Section): boolean;
 declare function isAxialCenterDrilling(section: Section,checkLiveTool: boolean): boolean;
 declare function isMillingCycle(section: Section,checkBoringCycles: boolean): boolean;
 declare function isSpeedFeedSynchronizationActive(): boolean;
@@ -588,20 +1187,20 @@ declare function isMultiAxis(): boolean;
 declare function isMultiChannelProgram(): boolean;
 declare function getNumberOfChannels(): number;
 declare function getCurrentChannel(): number;
-declare function getNumberOfSyncGroups(channel: r): number;
+declare function getNumberOfSyncGroups(channel: number): number;
 declare function getCurrentSyncGroup(): number;
 declare function getNumberOfRecords(): number;
-declare function getRecord(id: r): Record;
+declare function getRecord(id: number): Recorda;
 declare function getCurrentSectionId(): number;
 declare function getNumberOfSections(): number;
-declare function getSection(index: r): Section;
+declare function getSection(index: number): Section;
 declare function getPreviousSection(): Section;
 declare function hasNextSection(): boolean;
 declare function getNextSection(): Section;
 declare function getToolTable(): ToolTable;
-declare function writeToolTable(orderBy: r): void;
+declare function writeToolTable(orderBy: number): void;
 declare function getCurrentRecordId(): number;
-declare function getMachiningDistance(tool: r): number;
+declare function getMachiningDistance(tool: number): number;
 declare function isExpanding(): boolean;
 declare function getEnd(): Vector;
 declare function getDirection(): Vector;
@@ -621,63 +1220,63 @@ declare function getHelicalOffset(): Vector;
 declare function getHelicalDistance(): number;
 declare function getHelicalPitch(): number;
 declare function canLinearize(): boolean;
-declare function linearize(tolerance: r): void;
-declare function getNumberOfSegments(tolerance: r): number;
-declare function getPositionU(u: r): Vector;
+declare function linearize(tolerance: number): void;
+declare function getNumberOfSegments(tolerance: number): number;
+declare function getPositionU(u: number): Vector;
 declare function getCircularMotion(): CircularMotion;
 declare function getFeedrate(): number;
 declare function getMovement(): number;
 declare function getPower(): boolean;
 declare function getSpindleSpeed(): number;
-declare function isSpindleSpeedDifferent(section: n): boolean;
+declare function isSpindleSpeedDifferent(section: Section): boolean;
 declare function getRadiusCompensation(): number;
 declare function getCompensationOffset(): number;
 declare function hasPreviousRecord(): boolean;
-declare function getPreviousRecord(): Record;
+declare function getPreviousRecord(): Recorda;
 declare function hasNextRecord(): boolean;
-declare function getNextRecord(): Record;
+declare function getNextRecord(): Recorda;
 declare function getFirstTool(): Tool;
-declare function setWriteInvocations(writeInvocations: n): void;
-declare function setWriteStack(writeStack: n): void;
+declare function setWriteInvocations(writeInvocations: boolean): void;
+declare function setWriteStack(writeStack: boolean): void;
 declare function writeSectionNotes(): void;
 declare function writeSetupNotes(): void;
 declare function isFirstCyclePoint(): boolean;
 declare function isLastCyclePoint(): boolean;
 declare function getCyclePointId(): number;
 declare function getNumberOfCyclePoints(): number;
-declare function getCyclePoint(index: r): Vector;
+declare function getCyclePoint(index: number): Vector;
 declare function onImpliedCommand(command: number): void;
-declare function hasGlobalParameter(name: g): boolean;
+declare function hasGlobalParameter(name: string): boolean;
 declare function getGlobalParameter(name: string,defaultValue: Value): Value;
-declare function getProperty(property: ScriptObject,defaultValue: Value): Value;
-declare function setProperty(property: ScriptObject,value: Value): void;
-declare function hasParameter(name: g): boolean;
+declare function getProperty(property: string,defaultValue?: Value): Value;
+declare function setProperty(property: string,value: Value): void;
+declare function hasParameter(name: string): boolean;
 declare function getParameter(name: string,defaultValue?: Value): Value;
-declare function registerTerminationHandler(func: n): void;
-declare function toDeg(radians: r): number;
-declare function toRad(degrees: r): number;
-declare function parseSpatial(value: string): number;
-declare function getPlane(direction: r): number;
-declare function getISOPlane(plane: r): number;
-declare function isSameDirection(a,b): boolean;
-declare function getSectionsInChannel(channel: r): Array;
+declare function registerTerminationHandler(func: Function): void;
+declare function toDeg(radians: number): number;
+declare function toRad(degrees: number): number;
+declare function parseSpatial (value: string): number;
+declare function getPlane(direction: Vector): number;
+declare function getISOPlane(plane: number): number;
+declare function isSameDirection(a: Vector,b: Vector): boolean;
+declare function getSectionsInChannel(channel: number): Section[];
 declare function validatePropertyDefinitions(): boolean;
 declare function validateProperties(): boolean;
 declare function getProgramNameAsInt(min: number,max: number): number;
-declare function getProgramNameAsstring(charLimit: r): string;
+declare function getProgramNameAsString(charLimit: number): string;
 declare function isToolChangeNeeded(section: Section,arguments: string): boolean;
-declare function getNextTool(number: r): Tool;
+declare function getNextTool(number: number): Tool | undefined;
 declare function getNextTool(section: Section,firstTool: boolean,arguments: string): Tool;
-declare function isNewWorkPlane(section: n): boolean;
-declare function isNewWorkOffset(section: n): boolean;
-declare function toolZRange(): RANGE;
-declare function range(first: number,end: number,step: number): Array;
-declare function interval(from: number,to: number): Array;
-declare function flatten(array: y): Array;
-declare function getQuadrant(angle: r): number;
-declare function conditional(condition,value): string;
+declare function isNewWorkPlane(section: Section): boolean;
+declare function isNewWorkOffset(section: Section): boolean;
+declare function toolZRange(): Range;
+declare function range(first: number,end: number,step: number): number[];
+declare function interval(from: number,to: number): number[];
+//declare function flatten(array: Array): Array;
+declare function getQuadrant(angle: number): number;
+declare function conditional(condition: boolean,value: string): string;
 declare function validate(expression: Value,message: string): void;
-declare function debug(message: g): void;
+declare function debug(message: string): void;
 declare function spatial(value: number,unit: number): number;
 declare function getInverseTime(distance: number,speed: number): number;
 declare function cycleNotSupported(): void;
@@ -689,22 +1288,22 @@ declare function isFirstSection(): boolean;
 declare function isLastSection(): boolean;
 declare function onExpandedRapid(x: number,y: number,z: number): void;
 declare function onExpandedLinear(x: number,y: number,z: number,feed: number): void;
-declare function onExpandedSpindleSpeed(spindleSpeed: r): void;
-declare function createMachineConfiguration(specifiers: p): MachineConfiguration;
-declare function getMachineConfigurationAsText(machine: n): string;
-declare function createAxis(specifiers: p): Axis;
-declare function createFormat(specifiers: p): Formatnumber;
-declare function createOutputVariable(specifiers: Specifier,format: Format): OutputVariable;
-declare function createVariable(specifiers: {},format: Format): Variable;
-declare function createIncrementalVariable(specifiers: Specifier,format: Format): IncrementalVariable;
-declare function createReferenceVariable(specifiers: Specifier,format: Format): ReferenceVariable;
-declare function createModal(specifiers: Specifier,format: Format): Modal;
-declare function createModalGroup(specifiers: Specifier,groups: Array,format: Format): ModalGroup;
-declare function repositionToCycleClearance(cycle: Map,x: number,y: number,z: number): void;
+declare function onExpandedSpindleSpeed(spindleSpeed: number): void;
+declare function createMachineConfiguration(specifiers: any): MachineConfiguration;
+declare function getMachineConfigurationAsText(machine: MachineConfiguration): string;
+declare function createAxis(specifiers: any): Axis;
+declare function createFormat(specifiers: any): FormatNumber;
+declare function createOutputVariable(specifiers: any,format: Format): OutputVariable;
+declare function createVariable(specifiers: any,format: Format): Variable;
+declare function createIncrementalVariable(specifiers: any,format: Format): IncrementalVariable;
+declare function createReferenceVariable(specifiers: {prefix?: string,force?: boolean,},format: Format): ReferenceVariable;
+declare function createModal(specifiers: any,format: Format): Modal;
+declare function createModalGroup(specifiers: any,groups: number[],format: Format): ModalGroup;
+declare function repositionToCycleClearance(cycle: any,x: number,y: number,z: number): void;
 declare function expandCyclePoint(x: number,y: number,z: number): void;
 declare function isWellKnownCycle(): boolean;
-declare function isProbingCycle(uri: g): boolean;
-declare function isSubSpindleCycle(uri: g): boolean;
+declare function isProbingCycle(uri: string): boolean;
+declare function isSubSpindleCycle(uri: string): boolean;
 declare function isWellKnownCommand(command: number): boolean;
 declare function getCommandStringId(command: number): string;
 declare function canIgnoreCommand(command: number): boolean;
@@ -712,49 +1311,50 @@ declare function onUnsupportedCommand(command: number): void;
 declare function expandManualNC(command: number,value: Value): void;
 declare function onUnsupportedCoolant(coolant: number): void;
 declare function getCoolantName(coolant: number): string;
-declare function getMaterialName(material: r): string;
-declare function getToolTypeName(tool): string;
-declare function onMachine(): void;
-declare function onOpen(): void;
-declare function onCycle(): void;
-declare function onCyclePoint(x: number,y: number,z: number): void;
-declare function onCyclePath(): void;
-declare function onCyclePathEnd(): void;
-declare function onCycleEnd(): void;
-declare function onParameter(name: string,value: Value): void;
-declare function onPassThrough(value: e): void;
-declare function onComment(comment: g): void;
-declare function onRapid(x: number,y: number,z: number): void;
-declare function onLinear(x: number,y: number,z: number,feed: number): void;
-declare function onLinearExtrude(x: number,y: number,z: number,feed: number,extrusionLength: number): void;
-declare function onCircular(clockwise: boolean,cx: number,cy: number,cz: number,x: number,y: number,z: number,feed: number): void;
-declare function onCircularExtrude(clockwise: boolean,cx: number,cy: number,cz: number,x: number,y: number,z: number,feed: number,extrusionLength: number): void;
-declare function onRapid5D(x: number,y: number,z: number,dx: number,dy: number,dz: number): void;
-declare function onLinear5D(x: number,y: number,z: number,dx: number,dy: number,dz: number,feed: number): void;
-declare function onRewindMachine(a: number,b: number,c: number): void;
-declare function onRewindMachineEntry(a: number,b: number,c: number): void;
-declare function onMoveToSafeRetractPosition(): void;
-declare function onReturnFromSafeRetractPosition(x: number,y: number,z: number): void;
-declare function onRotateAxes(x: number,y: number,z: number,a: number,b: number,c: number): void;
-declare function onMovement(movement: r): void;
-declare function onPower(power: n): void;
-declare function onRadiusCompensation(): void;
-declare function onToolCompensation(compensation: r): void;
-declare function onDwell(time: r): void;
-declare function onSpindleSpeed(spindleSpeed: r): void;
-declare function onLayer(layernumber: r): void;
-declare function onLayerEnd(layernumber: r): void;
-declare function onExtrusionReset(length: r): void;
-declare function onExtruderChange(extruderId: r): void;
-declare function onExtruderTemp(temp: number,wait: boolean,extruderId: number): void;
-declare function onBedTemp(temp: number,wait: boolean): void;
-declare function onFanSpeed(speed: number,fanId: number): void;
-declare function onMaxAcceleration(xAxis: number,yAxis: number,zAxis: number,eAxis: number): void;
-declare function onAcceleration(travel: number,printing: number,retract: number): void;
-declare function onJerk(xAxis: number,yAxis: number,zAxis: number,eAxis: number): void;
-declare function onCommand(command: number): void;
-declare function onOrientateSpindle(angle: r): void;
-declare function onSectionEnd(): void;
+declare function getMaterialName(material: number): string;
+declare function getToolTypeName(tool: Tool): string;
+//declare function onMachine(): void;
+//declare function onOpen(): void;
+//declare function onCycle(): void;
+//declare function onCyclePoint(x: number,y: number,z: number): void;
+//declare function onCyclePath(): void;
+//declare function onCyclePathEnd(): void;
+//declare function onCycleEnd(): void;
+//declare function onParameter(name: string,value: Value): void;
+//declare function onPassThrough(value: Value): void;
+//declare function onComment(comment: string): void;
+//declare function onRapid(x: number,y: number,z: number): void;
+//declare function onLinear(x: number,y: number,z: number,feed: number): void;
+//declare function onLinearExtrude(x: number,y: number,z: number,feed: number,extrusionLength: number): void;
+//declare function onCircular(clockwise: boolean,cx: number,cy: number,cz: number,x: number,y: number,z: number,feed: number): void;
+//declare function onCircularExtrude(clockwise: boolean,cx: number,cy: number,cz: number,x: number,y: number,z: number,feed: number,extrusionLength: number): void;
+//declare function onRapid5D(x: number,y: number,z: number,dx: number,dy: number,dz: number): void;
+//declare function onLinear5D(x: number,y: number,z: number,dx: number,dy: number,dz: number,feed: number): void;
+//declare function onRewindMachine(a: number,b: number,c: number): void;
+//declare function onRewindMachineEntry(a: number,b: number,c: number): void;
+//declare function onMoveToSafeRetractPosition(): void;
+//declare function onReturnFromSafeRetractPosition(x: number,y: number,z: number): void;
+//declare function onRotateAxes(x: number,y: number,z: number,a: number,b: number,c: number): void;
+//declare function onMovement(movement: number): void;
+//declare function onPower(power: boolean): void;
+//declare function onRadiusCompensation(): void;
+//declare function onToolCompensation(compensation: number): void;
+//declare function onDwell(time: number): void;
+//declare function onSpindleSpeed(spindleSpeed: number): void;
+//declare function onLayer(layerNumber: number): void;
+//declare function onLayerEnd(layerNumber: number): void;
+//declare function onExtrusionReset(length: number): void;
+//declare function onExtruderChange(extruderId: number): void;
+//declare function onExtruderTemp(temp: number,wait: boolean,extruderId: number): void;
+//declare function onBedTemp(temp: number,wait: boolean): void;
+//declare function onFanSpeed(speed: number,fanId: number): void;
+//declare function onMaxAcceleration(xAxis: number,yAxis: number,zAxis: number,eAxis: number): void;
+//declare function onAcceleration(travel: number,printing: number,retract: number): void;
+//declare function onJerk(xAxis: number,yAxis: number,zAxis: number,eAxis: number): void;
+//declare function onCommand(command: number): void;
+//declare function onOrientateSpindle(angle: number): void;
+//declare function onSectionEnd(): void;
+//declare function onClose(): void;
 
 declare var outputUnit: number; 
 declare var currentSection: Section; 
@@ -809,7 +1409,7 @@ declare var allowHelicalMoves: boolean;
 declare var allowSpiralMoves: boolean; 
 declare var allowedCircularPlanes: number | undefined; 
 declare var machineParameters: MachineParameters; 
-declare var properties: Map; 
+declare var properties: any;///////////////////////////////////////CHANGE THIS; 
 declare var NUL: string;//NUL ASCII control code.
 declare var SOH: string;//SOH ASCII control code.
 declare var STX: string;//STX ASCII control code.
@@ -851,5 +1451,175 @@ declare var feedrate: number;
 declare var spindleSpeed: number; 
 declare var machineConfiguration: MachineConfiguration; 
 declare var cycleType: string; 
-declare var cycle: Map; 
+declare var cycle: {
+	[key: string]: any,
+}; 
 declare var cycleExpanded: boolean
+
+declare const DEG: number;
+
+declare const CAPABILITY_MILLING: number;
+declare const CAPABILITY_TURNING: number;
+declare const CAPABILITY_JET: number;
+declare const CAPABILITY_SETUP_SHEET: number;
+declare const CAPABILITY_INTERMEDIATE: number;
+declare const IN: number;//Inch unit.
+declare const MM: number;//Millimeters unit.
+declare const PLANE_XY: number;//Circular XY plane.
+declare const PLANE_XZ: number;//Circular XZ plane. Deprecated use PLANE_ZX instead.
+declare const PLANE_ZX: number;//Circular ZX plane.
+declare const PLANE_YZ: number;//Circular YZ plane.
+declare const X: number;//X coordinate index.
+declare const Y: number;//Y coordinate index.
+declare const Z: number;//Z coordinate index.
+declare const A: number;//A rotary index.
+declare const B: number;//B rotary index.
+declare const C: number;//C rotary index.
+declare const ABC: number;//All rotaries index.
+declare const TOOL_AXIS_X: number;//YZ-plane.
+declare const TOOL_AXIS_Y: number;//ZX-plane.
+declare const TOOL_AXIS_Z: number;//XY-plane.
+declare const HAS_PARAMETER: number;//Has parameter flag.
+declare const HAS_RAPID: number;//Has rapid flag.
+declare const HAS_LINEAR: number;//Has linear flag.
+declare const HAS_DWELL: number;//Has dwell flag.
+declare const HAS_CIRCULAR: number;//Has circular flag.
+declare const HAS_CYCLE: number;//Has cycle flag.
+declare const HAS_WELL_KNOWN_COMMAND: number;//Has well-known COMMAND flag.
+declare const HAS_COMMENT: number;//Has comment flag.
+declare const SINGULARITY_LINEARIZE_OFF: number;//Don't linearize moves around multi-axis singularities. More...
+declare const SINGULARITY_LINEARIZE_LINEAR: number;
+declare const SINGULARITY_LINEARIZE_ROTARY: number;//Keep rotary axes in line during multi-axis singularity linearization. More...
+declare const RADIUS_COMPENSATION_OFF: number;//Center radius compensation.
+declare const RADIUS_COMPENSATION_LEFT: number;//Left radius compensation.
+declare const RADIUS_COMPENSATION_RIGHT: number;//Right radius compensation.
+declare const RECORD_INVALID: number;//Invalid record type.
+declare const RECORD_WELL_KNOWN_COMMAND: number;//Well-known COMMAND.
+declare const RECORD_PARAMETER: number;//Parameter.
+declare const RECORD_LINEAR: number;//Linear motion.
+declare const RECORD_LINEAR_5D: number;//Linear 5-axis motion.
+declare const RECORD_LINEAR_ZXN: number;//Linear 5-axis motion.
+declare const RECORD_LINEAR_EXTRUDE: number;//Linear motion with extrude.
+declare const RECORD_CIRCULAR: number;//Circular motion.
+declare const RECORD_DWELL: number;//Dwell.
+declare const RECORD_CYCLE: number;//Cycle.
+declare const RECORD_CYCLE_OFF: number;//End of cycle.
+declare const RECORD_COMMENT: number;//Comment.
+declare const RECORD_WIDE_COMMENT: number;//Comment.
+declare const RECORD_CIRCULAR_EXTRUDE: number;//Circular motion with extrude.
+declare const COMMAND_INVALID: number;//Invalid (well-known COMMAND).
+declare const COMMAND_STOP: number;//Program stop (well-known number;M00).
+declare const COMMAND_OPTIONAL_STOP: number;//Optional program stop (well-known number;M01).
+declare const COMMAND_END: number;//Program end (well-known number;M02).
+declare const COMMAND_SPINDLE_CLOCKWISE: number;//Clockwise spindle direction (well-known number;M03).
+declare const COMMAND_SPINDLE_COUNTERCLOCKWISE: number;//Counterclockwise spidle direction (well-known number;M04).
+declare const COMMAND_START_SPINDLE: number;
+declare const COMMAND_STOP_SPINDLE: number;//Spindle stop (well-known number;M05).
+declare const COMMAND_ORIENTATE_SPINDLE: number;
+declare const COMMAND_LOAD_TOOL: number;//Tool change (M06).
+declare const COMMAND_COOLANT_ON: number;//Coolant on (M08).
+declare const COMMAND_COOLANT_OFF: number;//Coolant off (M09).
+declare const COMMAND_ACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Activate speed-feed synchronization (well-known COMMAND).
+declare const COMMAND_DEACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Deactivate speed-feed synchronization (well-known COMMAND).
+declare const COMMAND_LOCK_MULTI_AXIS: number;//Locks the 4th and 5th axes. This number;is optional.
+declare const COMMAND_UNLOCK_MULTI_AXIS: number;//Unlocks the 4th and 5th axes. This number;is optional.
+declare const COMMAND_EXACT_STOP: number;//Exact stop. This number;is optional.
+declare const COMMAND_START_CHIP_TRANSPORT: number;//Close chip transport.
+declare const COMMAND_STOP_CHIP_TRANSPORT: number;//Stop chip transport.
+declare const COMMAND_OPEN_DOOR: number;//Open primary door.
+declare const COMMAND_CLOSE_DOOR: number;//Close primary door.
+declare const COMMAND_BREAK_CONTROL: number;//Break control.
+declare const COMMAND_TOOL_MEASURE: number;//Measure tool.
+declare const COMMAND_CALIBRATE: number;//Run calibration cycle.
+declare const COMMAND_VERIFY: number;//Verify part/tool/machine integrity.
+declare const COMMAND_CLEAN: number;//Run cleaning cycle.
+declare const COMMAND_ALARM: number;//Alarm.
+declare const COMMAND_ALERT: number;//Alert.
+declare const COMMAND_CHANGE_PALLET: number;//Change pallet.
+declare const COMMAND_POWER_ON: number;//Power on.
+declare const COMMAND_POWER_OFF: number;//Power off.
+declare const COMMAND_MAIN_CHUCK_OPEN: number;//Open main chuck. More...
+declare const COMMAND_MAIN_CHUCK_CLOSE: number;//Close main chuck. More...
+declare const COMMAND_SECONDARY_CHUCK_OPEN: number;//Open secondary chuck. More...
+declare const COMMAND_SECONDARY_CHUCK_CLOSE: number;//Close secondary chuck. More...
+declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_ACTIVATE: number;//Activate spindle synchronization. More...
+declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_DEACTIVATE: number;//Deactivate spindle synchronization. More...
+declare const COMMAND_SYNC_CHANNELS: number;//Sync channels.
+declare const COMMAND_PROBE_ON: number;//Probe on.
+declare const COMMAND_PROBE_OFF: number;//Probe off.
+declare const COOLANT_DISABLED: number;//Coolant disabled.
+declare const COOLANT_FLOOD: number;//Flood coolant mode.
+declare const COOLANT_MIST: number;//Mist coolant mode.
+declare const COOLANT_TOOL: number;//Coolant through tool mode. Deprecated use COOLANT_THROUGH_TOOL instead.
+declare const COOLANT_THROUGH_TOOL: number;//Coolant through tool mode.
+declare const COOLANT_AIR: number;//Air mode.
+declare const COOLANT_AIR_THROUGH_TOOL: number;//Air through tool mode.
+declare const COOLANT_SUCTION: number;//Suction mode.
+declare const COOLANT_FLOOD_MIST: number;//Flood and mist coolant mode.
+declare const COOLANT_FLOOD_THROUGH_TOOL: number;//Flood and through tool coolant mode.
+declare const MATERIAL_UNSPECIFIED: number;//Unspecified material.
+declare const MATERIAL_HSS: number;//High-speed steel material.
+declare const MATERIAL_TI_COATED: number;//TI coated material.
+declare const MATERIAL_CARBIDE: number;//Carbide material.
+declare const MATERIAL_CERAMICS: number;//Ceramics material.
+declare const TOOL_UNSPECIFIED: number;//Unspecified tool.
+declare const TOOL_DRILL: number;//Drill.
+declare const TOOL_DRILL_CENTER: number;//Center drill.
+declare const TOOL_DRILL_SPOT: number;//Spot drill.
+declare const TOOL_DRILL_BLOCK: number;//Block drill.
+declare const TOOL_MILLING_END_FLAT: number;//Flat end-mill.
+declare const TOOL_MILLING_END_BALL: number;//Ball end-mill.
+declare const TOOL_MILLING_END_BULLNOSE: number;//Bullnose mill.
+declare const TOOL_MILLING_CHAMFER: number;//Chamfer mill.
+declare const TOOL_MILLING_FACE: number;//Face mill.
+declare const TOOL_MILLING_SLOT: number;//Slot mill.
+declare const TOOL_MILLING_RADIUS: number;//Radius mill.
+declare const TOOL_MILLING_DOVETAIL: number;//Dovetail mill.
+declare const TOOL_MILLING_TAPERED: number;//Tapered mill.
+declare const TOOL_MILLING_LOLLIPOP: number;//Lollipop mill.
+declare const TOOL_TAP_RIGHT_HAND: number;//Right tap tool.
+declare const TOOL_TAP_LEFT_HAND: number;//Left tap tool.
+declare const TOOL_REAMER: number;//Reamer tool.
+declare const TOOL_BORING_BAR: number;//Boring bar tool.
+declare const TOOL_COUNTER_BORE: number;//Counterbore tool.
+declare const TOOL_COUNTER_SINK: number;//Countersink tool.
+declare const TOOL_HOLDER_ONLY: number;//Holder.
+declare const TOOL_TURNING_GENERAL: number;//General turning tool.
+declare const TOOL_TURNING_THREADING: number;//Thread turning tool.
+declare const TOOL_TURNING_GROOVING: number;//Groove turning tool.
+declare const TOOL_TURNING_BORING: number;//Boring turning tool.
+declare const TOOL_TURNING_CUSTOM: number;//Custom turning tool.
+declare const TOOL_PROBE: number;//Probe.
+declare const TOOL_WIRE: number;//Wire.
+declare const TOOL_WATER_JET: number;//Water jet.
+declare const TOOL_LASER_CUTTER: number;//Laser cutter.
+declare const TOOL_WELDER: number;//Welder.
+declare const TOOL_GRINDER: number;//Grinder.
+declare const TOOL_MILLING_FORM: number;//Form mill.
+declare const TOOL_PLASMA_CUTTER: number;//Plasma cutter.
+declare const TOOL_MARKER: number;//Marker tool.
+declare const TOOL_MILLING_THREAD: number;//Thread mill.
+declare const TOOL_COMPENSATION_INSERT_CENTER: number;//Turning tool compensation.
+declare const TOOL_COMPENSATION_TIP: number;//Turning tool compensation.
+declare const TOOL_COMPENSATION_TIP_CENTER: number;//Turning tool compensation.
+declare const TOOL_COMPENSATION_TIP_TANGENT: number;//Turning tool compensation.
+declare const MOVEMENT_RAPID: number;//Rapid movement type.
+declare const MOVEMENT_LEAD_IN: number;//Lead-in movement type.
+declare const MOVEMENT_CUTTING: number;//Cutting movement type.
+declare const MOVEMENT_LEAD_OUT: number;//Lead-out movement type.
+declare const MOVEMENT_LINK_TRANSITION: number;//Transition linking movement type.
+declare const MOVEMENT_LINK_DIRECT: number;//Drection linking movement type.
+declare const MOVEMENT_RAMP_HELIX: number;//Helical ramp movement type.
+declare const MOVEMENT_RAMP_PROFILE: number;//Profile ramp movement type.
+declare const MOVEMENT_RAMP_ZIG_ZAG: number;//Zig-zag ramp movement type.
+declare const MOVEMENT_RAMP: number;//Ramp movement type.
+declare const MOVEMENT_PLUNGE: number;//Plunge movement type.
+declare const MOVEMENT_PREDRILL: number;//Predrill movement type.
+declare const MOVEMENT_EXTENDED: number;//Extended movement type.
+declare const MOVEMENT_REDUCED: number;//Reduced cutting feed movement type.
+declare const MOVEMENT_FINISH_CUTTING: number;//Finish cutting movement type.
+declare const MOVEMENT_HIGH_FEED: number;//High feed movement type.
+declare const HIGH_FEED_NO_MAPPING: number;//Do not map rapid traveerrorsal to high feed.
+declare const HIGH_FEED_MAP_MULTI: number;//Map rapid travesal along more than one axis to high feed.
+declare const HIGH_FEED_MAP_XY_Z: number;
+declare const HIGH_FEED_MAP_ANY: number;//Map all rapid travesals to high feed.
