@@ -1458,168 +1458,168 @@ declare var cycleExpanded: boolean
 
 declare const DEG: number;
 
-declare const CAPABILITY_MILLING: number;
-declare const CAPABILITY_TURNING: number;
-declare const CAPABILITY_JET: number;
-declare const CAPABILITY_SETUP_SHEET: number;
-declare const CAPABILITY_INTERMEDIATE: number;
-declare const IN: number;//Inch unit.
-declare const MM: number;//Millimeters unit.
-declare const PLANE_XY: number;//Circular XY plane.
-declare const PLANE_XZ: number;//Circular XZ plane. Deprecated use PLANE_ZX instead.
-declare const PLANE_ZX: number;//Circular ZX plane.
-declare const PLANE_YZ: number;//Circular YZ plane.
-declare const X: number;//X coordinate index.
-declare const Y: number;//Y coordinate index.
-declare const Z: number;//Z coordinate index.
-declare const A: number;//A rotary index.
-declare const B: number;//B rotary index.
-declare const C: number;//C rotary index.
-declare const ABC: number;//All rotaries index.
-declare const TOOL_AXIS_X: number;//YZ-plane.
-declare const TOOL_AXIS_Y: number;//ZX-plane.
-declare const TOOL_AXIS_Z: number;//XY-plane.
-declare const HAS_PARAMETER: number;//Has parameter flag.
-declare const HAS_RAPID: number;//Has rapid flag.
-declare const HAS_LINEAR: number;//Has linear flag.
-declare const HAS_DWELL: number;//Has dwell flag.
-declare const HAS_CIRCULAR: number;//Has circular flag.
-declare const HAS_CYCLE: number;//Has cycle flag.
-declare const HAS_WELL_KNOWN_COMMAND: number;//Has well-known COMMAND flag.
-declare const HAS_COMMENT: number;//Has comment flag.
-declare const SINGULARITY_LINEARIZE_OFF: number;//Don't linearize moves around multi-axis singularities. More...
-declare const SINGULARITY_LINEARIZE_LINEAR: number;
-declare const SINGULARITY_LINEARIZE_ROTARY: number;//Keep rotary axes in line during multi-axis singularity linearization. More...
-declare const RADIUS_COMPENSATION_OFF: number;//Center radius compensation.
-declare const RADIUS_COMPENSATION_LEFT: number;//Left radius compensation.
-declare const RADIUS_COMPENSATION_RIGHT: number;//Right radius compensation.
-declare const RECORD_INVALID: number;//Invalid record type.
-declare const RECORD_WELL_KNOWN_COMMAND: number;//Well-known COMMAND.
-declare const RECORD_PARAMETER: number;//Parameter.
-declare const RECORD_LINEAR: number;//Linear motion.
-declare const RECORD_LINEAR_5D: number;//Linear 5-axis motion.
-declare const RECORD_LINEAR_ZXN: number;//Linear 5-axis motion.
-declare const RECORD_LINEAR_EXTRUDE: number;//Linear motion with extrude.
-declare const RECORD_CIRCULAR: number;//Circular motion.
-declare const RECORD_DWELL: number;//Dwell.
-declare const RECORD_CYCLE: number;//Cycle.
-declare const RECORD_CYCLE_OFF: number;//End of cycle.
-declare const RECORD_COMMENT: number;//Comment.
-declare const RECORD_WIDE_COMMENT: number;//Comment.
-declare const RECORD_CIRCULAR_EXTRUDE: number;//Circular motion with extrude.
-declare const COMMAND_INVALID: number;//Invalid (well-known COMMAND).
-declare const COMMAND_STOP: number;//Program stop (well-known number;M00).
-declare const COMMAND_OPTIONAL_STOP: number;//Optional program stop (well-known number;M01).
-declare const COMMAND_END: number;//Program end (well-known number;M02).
-declare const COMMAND_SPINDLE_CLOCKWISE: number;//Clockwise spindle direction (well-known number;M03).
-declare const COMMAND_SPINDLE_COUNTERCLOCKWISE: number;//Counterclockwise spidle direction (well-known number;M04).
-declare const COMMAND_START_SPINDLE: number;
-declare const COMMAND_STOP_SPINDLE: number;//Spindle stop (well-known number;M05).
-declare const COMMAND_ORIENTATE_SPINDLE: number;
-declare const COMMAND_LOAD_TOOL: number;//Tool change (M06).
-declare const COMMAND_COOLANT_ON: number;//Coolant on (M08).
-declare const COMMAND_COOLANT_OFF: number;//Coolant off (M09).
-declare const COMMAND_ACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Activate speed-feed synchronization (well-known COMMAND).
-declare const COMMAND_DEACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Deactivate speed-feed synchronization (well-known COMMAND).
-declare const COMMAND_LOCK_MULTI_AXIS: number;//Locks the 4th and 5th axes. This number;is optional.
-declare const COMMAND_UNLOCK_MULTI_AXIS: number;//Unlocks the 4th and 5th axes. This number;is optional.
-declare const COMMAND_EXACT_STOP: number;//Exact stop. This number;is optional.
-declare const COMMAND_START_CHIP_TRANSPORT: number;//Close chip transport.
-declare const COMMAND_STOP_CHIP_TRANSPORT: number;//Stop chip transport.
-declare const COMMAND_OPEN_DOOR: number;//Open primary door.
-declare const COMMAND_CLOSE_DOOR: number;//Close primary door.
-declare const COMMAND_BREAK_CONTROL: number;//Break control.
-declare const COMMAND_TOOL_MEASURE: number;//Measure tool.
-declare const COMMAND_CALIBRATE: number;//Run calibration cycle.
-declare const COMMAND_VERIFY: number;//Verify part/tool/machine integrity.
-declare const COMMAND_CLEAN: number;//Run cleaning cycle.
-declare const COMMAND_ALARM: number;//Alarm.
-declare const COMMAND_ALERT: number;//Alert.
-declare const COMMAND_CHANGE_PALLET: number;//Change pallet.
-declare const COMMAND_POWER_ON: number;//Power on.
-declare const COMMAND_POWER_OFF: number;//Power off.
-declare const COMMAND_MAIN_CHUCK_OPEN: number;//Open main chuck. More...
-declare const COMMAND_MAIN_CHUCK_CLOSE: number;//Close main chuck. More...
-declare const COMMAND_SECONDARY_CHUCK_OPEN: number;//Open secondary chuck. More...
-declare const COMMAND_SECONDARY_CHUCK_CLOSE: number;//Close secondary chuck. More...
-declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_ACTIVATE: number;//Activate spindle synchronization. More...
-declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_DEACTIVATE: number;//Deactivate spindle synchronization. More...
-declare const COMMAND_SYNC_CHANNELS: number;//Sync channels.
-declare const COMMAND_PROBE_ON: number;//Probe on.
-declare const COMMAND_PROBE_OFF: number;//Probe off.
-declare const COOLANT_DISABLED: number;//Coolant disabled.
-declare const COOLANT_FLOOD: number;//Flood coolant mode.
-declare const COOLANT_MIST: number;//Mist coolant mode.
-declare const COOLANT_TOOL: number;//Coolant through tool mode. Deprecated use COOLANT_THROUGH_TOOL instead.
-declare const COOLANT_THROUGH_TOOL: number;//Coolant through tool mode.
-declare const COOLANT_AIR: number;//Air mode.
-declare const COOLANT_AIR_THROUGH_TOOL: number;//Air through tool mode.
-declare const COOLANT_SUCTION: number;//Suction mode.
-declare const COOLANT_FLOOD_MIST: number;//Flood and mist coolant mode.
-declare const COOLANT_FLOOD_THROUGH_TOOL: number;//Flood and through tool coolant mode.
-declare const MATERIAL_UNSPECIFIED: number;//Unspecified material.
-declare const MATERIAL_HSS: number;//High-speed steel material.
-declare const MATERIAL_TI_COATED: number;//TI coated material.
-declare const MATERIAL_CARBIDE: number;//Carbide material.
-declare const MATERIAL_CERAMICS: number;//Ceramics material.
-declare const TOOL_UNSPECIFIED: number;//Unspecified tool.
-declare const TOOL_DRILL: number;//Drill.
-declare const TOOL_DRILL_CENTER: number;//Center drill.
-declare const TOOL_DRILL_SPOT: number;//Spot drill.
-declare const TOOL_DRILL_BLOCK: number;//Block drill.
-declare const TOOL_MILLING_END_FLAT: number;//Flat end-mill.
-declare const TOOL_MILLING_END_BALL: number;//Ball end-mill.
-declare const TOOL_MILLING_END_BULLNOSE: number;//Bullnose mill.
-declare const TOOL_MILLING_CHAMFER: number;//Chamfer mill.
-declare const TOOL_MILLING_FACE: number;//Face mill.
-declare const TOOL_MILLING_SLOT: number;//Slot mill.
-declare const TOOL_MILLING_RADIUS: number;//Radius mill.
-declare const TOOL_MILLING_DOVETAIL: number;//Dovetail mill.
-declare const TOOL_MILLING_TAPERED: number;//Tapered mill.
-declare const TOOL_MILLING_LOLLIPOP: number;//Lollipop mill.
-declare const TOOL_TAP_RIGHT_HAND: number;//Right tap tool.
-declare const TOOL_TAP_LEFT_HAND: number;//Left tap tool.
-declare const TOOL_REAMER: number;//Reamer tool.
-declare const TOOL_BORING_BAR: number;//Boring bar tool.
-declare const TOOL_COUNTER_BORE: number;//Counterbore tool.
-declare const TOOL_COUNTER_SINK: number;//Countersink tool.
-declare const TOOL_HOLDER_ONLY: number;//Holder.
-declare const TOOL_TURNING_GENERAL: number;//General turning tool.
-declare const TOOL_TURNING_THREADING: number;//Thread turning tool.
-declare const TOOL_TURNING_GROOVING: number;//Groove turning tool.
-declare const TOOL_TURNING_BORING: number;//Boring turning tool.
-declare const TOOL_TURNING_CUSTOM: number;//Custom turning tool.
-declare const TOOL_PROBE: number;//Probe.
-declare const TOOL_WIRE: number;//Wire.
-declare const TOOL_WATER_JET: number;//Water jet.
-declare const TOOL_LASER_CUTTER: number;//Laser cutter.
-declare const TOOL_WELDER: number;//Welder.
-declare const TOOL_GRINDER: number;//Grinder.
-declare const TOOL_MILLING_FORM: number;//Form mill.
-declare const TOOL_PLASMA_CUTTER: number;//Plasma cutter.
-declare const TOOL_MARKER: number;//Marker tool.
-declare const TOOL_MILLING_THREAD: number;//Thread mill.
-declare const TOOL_COMPENSATION_INSERT_CENTER: number;//Turning tool compensation.
-declare const TOOL_COMPENSATION_TIP: number;//Turning tool compensation.
-declare const TOOL_COMPENSATION_TIP_CENTER: number;//Turning tool compensation.
-declare const TOOL_COMPENSATION_TIP_TANGENT: number;//Turning tool compensation.
-declare const MOVEMENT_RAPID: number;//Rapid movement type.
-declare const MOVEMENT_LEAD_IN: number;//Lead-in movement type.
-declare const MOVEMENT_CUTTING: number;//Cutting movement type.
-declare const MOVEMENT_LEAD_OUT: number;//Lead-out movement type.
-declare const MOVEMENT_LINK_TRANSITION: number;//Transition linking movement type.
-declare const MOVEMENT_LINK_DIRECT: number;//Drection linking movement type.
-declare const MOVEMENT_RAMP_HELIX: number;//Helical ramp movement type.
-declare const MOVEMENT_RAMP_PROFILE: number;//Profile ramp movement type.
-declare const MOVEMENT_RAMP_ZIG_ZAG: number;//Zig-zag ramp movement type.
-declare const MOVEMENT_RAMP: number;//Ramp movement type.
-declare const MOVEMENT_PLUNGE: number;//Plunge movement type.
-declare const MOVEMENT_PREDRILL: number;//Predrill movement type.
-declare const MOVEMENT_EXTENDED: number;//Extended movement type.
-declare const MOVEMENT_REDUCED: number;//Reduced cutting feed movement type.
-declare const MOVEMENT_FINISH_CUTTING: number;//Finish cutting movement type.
-declare const MOVEMENT_HIGH_FEED: number;//High feed movement type.
-declare const HIGH_FEED_NO_MAPPING: number;//Do not map rapid traveerrorsal to high feed.
-declare const HIGH_FEED_MAP_MULTI: number;//Map rapid travesal along more than one axis to high feed.
-declare const HIGH_FEED_MAP_XY_Z: number;
-declare const HIGH_FEED_MAP_ANY: number;//Map all rapid travesals to high feed.
+// declare const CAPABILITY_MILLING: number;
+// declare const CAPABILITY_TURNING: number;
+// declare const CAPABILITY_JET: number;
+// declare const CAPABILITY_SETUP_SHEET: number;
+// declare const CAPABILITY_INTERMEDIATE: number;
+// declare const IN: number;//Inch unit.
+// declare const MM: number;//Millimeters unit.
+// declare const PLANE_XY: number;//Circular XY plane.
+// declare const PLANE_XZ: number;//Circular XZ plane. Deprecated use PLANE_ZX instead.
+// declare const PLANE_ZX: number;//Circular ZX plane.
+// declare const PLANE_YZ: number;//Circular YZ plane.
+// declare const X: number;//X coordinate index.
+// declare const Y: number;//Y coordinate index.
+// declare const Z: number;//Z coordinate index.
+// declare const A: number;//A rotary index.
+// declare const B: number;//B rotary index.
+// declare const C: number;//C rotary index.
+// declare const ABC: number;//All rotaries index.
+// declare const TOOL_AXIS_X: number;//YZ-plane.
+// declare const TOOL_AXIS_Y: number;//ZX-plane.
+// declare const TOOL_AXIS_Z: number;//XY-plane.
+// declare const HAS_PARAMETER: number;//Has parameter flag.
+// declare const HAS_RAPID: number;//Has rapid flag.
+// declare const HAS_LINEAR: number;//Has linear flag.
+// declare const HAS_DWELL: number;//Has dwell flag.
+// declare const HAS_CIRCULAR: number;//Has circular flag.
+// declare const HAS_CYCLE: number;//Has cycle flag.
+// declare const HAS_WELL_KNOWN_COMMAND: number;//Has well-known COMMAND flag.
+// declare const HAS_COMMENT: number;//Has comment flag.
+// declare const SINGULARITY_LINEARIZE_OFF: number;//Don't linearize moves around multi-axis singularities. More...
+// declare const SINGULARITY_LINEARIZE_LINEAR: number;
+// declare const SINGULARITY_LINEARIZE_ROTARY: number;//Keep rotary axes in line during multi-axis singularity linearization. More...
+// declare const RADIUS_COMPENSATION_OFF: number;//Center radius compensation.
+// declare const RADIUS_COMPENSATION_LEFT: number;//Left radius compensation.
+// declare const RADIUS_COMPENSATION_RIGHT: number;//Right radius compensation.
+// declare const RECORD_INVALID: number;//Invalid record type.
+// declare const RECORD_WELL_KNOWN_COMMAND: number;//Well-known COMMAND.
+// declare const RECORD_PARAMETER: number;//Parameter.
+// declare const RECORD_LINEAR: number;//Linear motion.
+// declare const RECORD_LINEAR_5D: number;//Linear 5-axis motion.
+// declare const RECORD_LINEAR_ZXN: number;//Linear 5-axis motion.
+// declare const RECORD_LINEAR_EXTRUDE: number;//Linear motion with extrude.
+// declare const RECORD_CIRCULAR: number;//Circular motion.
+// declare const RECORD_DWELL: number;//Dwell.
+// declare const RECORD_CYCLE: number;//Cycle.
+// declare const RECORD_CYCLE_OFF: number;//End of cycle.
+// declare const RECORD_COMMENT: number;//Comment.
+// declare const RECORD_WIDE_COMMENT: number;//Comment.
+// declare const RECORD_CIRCULAR_EXTRUDE: number;//Circular motion with extrude.
+// declare const COMMAND_INVALID: number;//Invalid (well-known COMMAND).
+// declare const COMMAND_STOP: number;//Program stop (well-known number;M00).
+// declare const COMMAND_OPTIONAL_STOP: number;//Optional program stop (well-known number;M01).
+// declare const COMMAND_END: number;//Program end (well-known number;M02).
+// declare const COMMAND_SPINDLE_CLOCKWISE: number;//Clockwise spindle direction (well-known number;M03).
+// declare const COMMAND_SPINDLE_COUNTERCLOCKWISE: number;//Counterclockwise spidle direction (well-known number;M04).
+// declare const COMMAND_START_SPINDLE: number;
+// declare const COMMAND_STOP_SPINDLE: number;//Spindle stop (well-known number;M05).
+// declare const COMMAND_ORIENTATE_SPINDLE: number;
+// declare const COMMAND_LOAD_TOOL: number;//Tool change (M06).
+// declare const COMMAND_COOLANT_ON: number;//Coolant on (M08).
+// declare const COMMAND_COOLANT_OFF: number;//Coolant off (M09).
+// declare const COMMAND_ACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Activate speed-feed synchronization (well-known COMMAND).
+// declare const COMMAND_DEACTIVATE_SPEED_FEED_SYNCHRONIZATION: number;//Deactivate speed-feed synchronization (well-known COMMAND).
+// declare const COMMAND_LOCK_MULTI_AXIS: number;//Locks the 4th and 5th axes. This number;is optional.
+// declare const COMMAND_UNLOCK_MULTI_AXIS: number;//Unlocks the 4th and 5th axes. This number;is optional.
+// declare const COMMAND_EXACT_STOP: number;//Exact stop. This number;is optional.
+// declare const COMMAND_START_CHIP_TRANSPORT: number;//Close chip transport.
+// declare const COMMAND_STOP_CHIP_TRANSPORT: number;//Stop chip transport.
+// declare const COMMAND_OPEN_DOOR: number;//Open primary door.
+// declare const COMMAND_CLOSE_DOOR: number;//Close primary door.
+// declare const COMMAND_BREAK_CONTROL: number;//Break control.
+// declare const COMMAND_TOOL_MEASURE: number;//Measure tool.
+// declare const COMMAND_CALIBRATE: number;//Run calibration cycle.
+// declare const COMMAND_VERIFY: number;//Verify part/tool/machine integrity.
+// declare const COMMAND_CLEAN: number;//Run cleaning cycle.
+// declare const COMMAND_ALARM: number;//Alarm.
+// declare const COMMAND_ALERT: number;//Alert.
+// declare const COMMAND_CHANGE_PALLET: number;//Change pallet.
+// declare const COMMAND_POWER_ON: number;//Power on.
+// declare const COMMAND_POWER_OFF: number;//Power off.
+// declare const COMMAND_MAIN_CHUCK_OPEN: number;//Open main chuck. More...
+// declare const COMMAND_MAIN_CHUCK_CLOSE: number;//Close main chuck. More...
+// declare const COMMAND_SECONDARY_CHUCK_OPEN: number;//Open secondary chuck. More...
+// declare const COMMAND_SECONDARY_CHUCK_CLOSE: number;//Close secondary chuck. More...
+// declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_ACTIVATE: number;//Activate spindle synchronization. More...
+// declare const COMMAND_SECONDARY_SPINDLE_SYNCHRONIZATION_DEACTIVATE: number;//Deactivate spindle synchronization. More...
+// declare const COMMAND_SYNC_CHANNELS: number;//Sync channels.
+// declare const COMMAND_PROBE_ON: number;//Probe on.
+// declare const COMMAND_PROBE_OFF: number;//Probe off.
+// declare const COOLANT_DISABLED: number;//Coolant disabled.
+// declare const COOLANT_FLOOD: number;//Flood coolant mode.
+// declare const COOLANT_MIST: number;//Mist coolant mode.
+// declare const COOLANT_TOOL: number;//Coolant through tool mode. Deprecated use COOLANT_THROUGH_TOOL instead.
+// declare const COOLANT_THROUGH_TOOL: number;//Coolant through tool mode.
+// declare const COOLANT_AIR: number;//Air mode.
+// declare const COOLANT_AIR_THROUGH_TOOL: number;//Air through tool mode.
+// declare const COOLANT_SUCTION: number;//Suction mode.
+// declare const COOLANT_FLOOD_MIST: number;//Flood and mist coolant mode.
+// declare const COOLANT_FLOOD_THROUGH_TOOL: number;//Flood and through tool coolant mode.
+// declare const MATERIAL_UNSPECIFIED: number;//Unspecified material.
+// declare const MATERIAL_HSS: number;//High-speed steel material.
+// declare const MATERIAL_TI_COATED: number;//TI coated material.
+// declare const MATERIAL_CARBIDE: number;//Carbide material.
+// declare const MATERIAL_CERAMICS: number;//Ceramics material.
+// declare const TOOL_UNSPECIFIED: number;//Unspecified tool.
+// declare const TOOL_DRILL: number;//Drill.
+// declare const TOOL_DRILL_CENTER: number;//Center drill.
+// declare const TOOL_DRILL_SPOT: number;//Spot drill.
+// declare const TOOL_DRILL_BLOCK: number;//Block drill.
+// declare const TOOL_MILLING_END_FLAT: number;//Flat end-mill.
+// declare const TOOL_MILLING_END_BALL: number;//Ball end-mill.
+// declare const TOOL_MILLING_END_BULLNOSE: number;//Bullnose mill.
+// declare const TOOL_MILLING_CHAMFER: number;//Chamfer mill.
+// declare const TOOL_MILLING_FACE: number;//Face mill.
+// declare const TOOL_MILLING_SLOT: number;//Slot mill.
+// declare const TOOL_MILLING_RADIUS: number;//Radius mill.
+// declare const TOOL_MILLING_DOVETAIL: number;//Dovetail mill.
+// declare const TOOL_MILLING_TAPERED: number;//Tapered mill.
+// declare const TOOL_MILLING_LOLLIPOP: number;//Lollipop mill.
+// declare const TOOL_TAP_RIGHT_HAND: number;//Right tap tool.
+// declare const TOOL_TAP_LEFT_HAND: number;//Left tap tool.
+// declare const TOOL_REAMER: number;//Reamer tool.
+// declare const TOOL_BORING_BAR: number;//Boring bar tool.
+// declare const TOOL_COUNTER_BORE: number;//Counterbore tool.
+// declare const TOOL_COUNTER_SINK: number;//Countersink tool.
+// declare const TOOL_HOLDER_ONLY: number;//Holder.
+// declare const TOOL_TURNING_GENERAL: number;//General turning tool.
+// declare const TOOL_TURNING_THREADING: number;//Thread turning tool.
+// declare const TOOL_TURNING_GROOVING: number;//Groove turning tool.
+// declare const TOOL_TURNING_BORING: number;//Boring turning tool.
+// declare const TOOL_TURNING_CUSTOM: number;//Custom turning tool.
+// declare const TOOL_PROBE: number;//Probe.
+// declare const TOOL_WIRE: number;//Wire.
+// declare const TOOL_WATER_JET: number;//Water jet.
+// declare const TOOL_LASER_CUTTER: number;//Laser cutter.
+// declare const TOOL_WELDER: number;//Welder.
+// declare const TOOL_GRINDER: number;//Grinder.
+// declare const TOOL_MILLING_FORM: number;//Form mill.
+// declare const TOOL_PLASMA_CUTTER: number;//Plasma cutter.
+// declare const TOOL_MARKER: number;//Marker tool.
+// declare const TOOL_MILLING_THREAD: number;//Thread mill.
+// declare const TOOL_COMPENSATION_INSERT_CENTER: number;//Turning tool compensation.
+// declare const TOOL_COMPENSATION_TIP: number;//Turning tool compensation.
+// declare const TOOL_COMPENSATION_TIP_CENTER: number;//Turning tool compensation.
+// declare const TOOL_COMPENSATION_TIP_TANGENT: number;//Turning tool compensation.
+// declare const MOVEMENT_RAPID: number;//Rapid movement type.
+// declare const MOVEMENT_LEAD_IN: number;//Lead-in movement type.
+// declare const MOVEMENT_CUTTING: number;//Cutting movement type.
+// declare const MOVEMENT_LEAD_OUT: number;//Lead-out movement type.
+// declare const MOVEMENT_LINK_TRANSITION: number;//Transition linking movement type.
+// declare const MOVEMENT_LINK_DIRECT: number;//Drection linking movement type.
+// declare const MOVEMENT_RAMP_HELIX: number;//Helical ramp movement type.
+// declare const MOVEMENT_RAMP_PROFILE: number;//Profile ramp movement type.
+// declare const MOVEMENT_RAMP_ZIG_ZAG: number;//Zig-zag ramp movement type.
+// declare const MOVEMENT_RAMP: number;//Ramp movement type.
+// declare const MOVEMENT_PLUNGE: number;//Plunge movement type.
+// declare const MOVEMENT_PREDRILL: number;//Predrill movement type.
+// declare const MOVEMENT_EXTENDED: number;//Extended movement type.
+// declare const MOVEMENT_REDUCED: number;//Reduced cutting feed movement type.
+// declare const MOVEMENT_FINISH_CUTTING: number;//Finish cutting movement type.
+// declare const MOVEMENT_HIGH_FEED: number;//High feed movement type.
+// declare const HIGH_FEED_NO_MAPPING: number;//Do not map rapid traveerrorsal to high feed.
+// declare const HIGH_FEED_MAP_MULTI: number;//Map rapid travesal along more than one axis to high feed.
+// declare const HIGH_FEED_MAP_XY_Z: number;
+// declare const HIGH_FEED_MAP_ANY: number;//Map all rapid travesals to high feed.
