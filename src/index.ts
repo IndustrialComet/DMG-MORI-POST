@@ -631,6 +631,7 @@ function onOpen() {
 		}
 		if (programName) {
 			writeln("O" + formats.o.format(programId) + " (" + filterText(String(programName).toUpperCase(), permittedCommentChars) + ")");
+//O3224 (COMMENT);
 		} else {
 			writeln("O" + formats.o.format(programId));
 		}
