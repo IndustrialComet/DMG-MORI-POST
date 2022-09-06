@@ -867,7 +867,8 @@ declare class Tool {
 	threadPitch: number;//The number of thread per unit of length.
 	coolant: number;//The coolant.
 	material: number;//The material.
-	comment: string;//Comment.
+	comment: string | undefined;//The Comment.
+	desciption: string | undefined;//The Description.
 	vendor: string;//The vendor.
 	productId: string;//The product id.
 	unit: number;//The unit.

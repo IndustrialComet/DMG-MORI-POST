@@ -1,0 +1,1 @@
+tsc -p tsconfig.json & cd build & del /f MORI-5100_NEW.cps & ren index.js MORI-5100_NEW.cps & cd ..
