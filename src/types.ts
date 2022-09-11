@@ -1174,7 +1174,7 @@ declare function skipRemainingSection(): void;
 declare function isClockwiseSpindleDirection(): boolean;
 declare function isSpindleActive(): boolean;
 declare function isCoolantActive(): boolean;
-declare function isProbeOperation(section: Section): boolean;
+declare function isProbeOperation(section?: Section): boolean;
 declare function isInspectionOperation(section: Section): boolean;
 declare function isDepositionOperation(section: Section): boolean;
 declare function isDrillingCycle(section: Section,checkBoringCycles: boolean): boolean;
@@ -1453,7 +1453,58 @@ declare var spindleSpeed: number;
 declare var machineConfiguration: MachineConfiguration; 
 declare var cycleType: string | undefined; 
 declare var cycle: {
-	[key: string]: any,
+	clearance: number;//The clearance plane (absolute coordinate).
+	retract: number;//The retract plane (absolute coordinate). Rapid motion is allowed from the clearance plane and down to the retract plane). The retract plane defaults to the clearance plane. The retract plane can be ignored if not supported by the control.
+	stock: number;//The stock plane (absolute coordinate).
+	depth: number;//The depth below the stock plane. The depth is positive for points below the stock plane.
+	bottom: number;//The bottom plane (stock - depth).
+	pitch: number;//The helical pitch (incremental depth per turn).
+	feedrate: number;//The primary feedrate. Usually specifies the plunging feedrate.
+	retractFeedrate: number;//The retraction feedrate. Defaults to the primary feedrate if not specified.
+	plungeFeedrate: number;//The plunge feedrate. Defaults to the primary feedrate if not specified. Note that the primary feedrate (feedrate) is the plunge feedrate for drilling cycles.
+	stopSpindle: boolean;//Stop spindle during positioning/retracting.
+	positioningFeedrate: number;//The positioning feedrate.
+	positioningSpindleSpeed: number;//The positioning spindle speed.
+	dwellDepth: number;//The dwelling depth.
+	dwell: number;//The dwelling time in seconds.
+	incrementalDepth: number;//The incremental/pecking depth.
+	incrementalDepthReduction: number;//The incremental/pecking depth reduction per plunge. Defaults to 0.
+	minimumIncrementalDepth: number;//The minimum incremental/pecking depth per plunge. Defaults to incrementalDepth.
+	accumulatedDepth: number;//Specifies the total plunging depth before forcing full retract to the retract plane.
+	plungesPerRetract: number;//Specifies the number of plunges per retract (derived from accumulatedDepth and incrementalDepth).
+	chipBreakDistance: number | undefined;//Specifies the distance to retract to break the chip. Undefined by default.
+	shift: number;//Specifies the shifting distance away from the boring wall.
+	shiftOrientation: number;//Specifies the orientation of the cutter in radians when shifting. Defaults to machineParameters.spindleOrientation.
+	compensatedShiftOrientation: number;//Specifies the orientation of the spindle in radians when shifting (shiftOrientation - tool.boringBarOrientation).
+	shiftDirection: number;//Specifies the shift direction in radians when shifting (pi + shiftOrientation).
+	backBoreDistance: number;//Specifies the back boring distance.
+	diameter: number;//Specifies the diameter of the hole.
+	stepover: number;//The maximum stepover between passes.
+	numberOfSteps: number;//Specifies the number of passes/steps.
+	threading: number;//Specifies left/right handed thread.
+	direction: number;//Specifies climb/conventional milling.
+	repeatPass: boolean;//Specifies that the final pass should be repeated.
+	compensation: "computer" | "control" | "wear" | "inverseWear";//Specifies that the compensation type. That valid types are computer, control, wear, and inverseWear.
+	incrementalX: number;//Specifies the incremental distance along X.
+	incrementalZ: number;//Specifies the incremental distance along Z.
+	//PROBING
+	angleAskewAction: undefined | "stopmessage";//This parameter will only be defined with an angular probing cycle when the Askew box is checked. The only valid setting when it is defined is the string stop-message.
+	approach1: string;//The direction the probe moves at it approaches the part. It is a string variable and can be either positive or negative.
+	approach2: string;//The direction the probe moves as it approaches the part for the second face of a multi-face operation. It is a string variable and can be either positive or negative.
+	hasPositionalTolerance: number;//Set to 1 if a positional tolerance is specified. The positional tolerance is stored in the tolerancePosition parameter.
+	hasSizeTolerance: number;//Set to 1 if a size tolerance is specified. The size tolerance is stored in the toleranceSize parameter.
+	incrementComponent: number;//Set to 1 if the Increment Component box is checked under Print Results.
+	outOfPositionAction: undefined | "stopmessage";//This parameter will only be defined when the Out of Position box is checked. The only valid setting when it is defined is the string stopmessage.
+	printResults: number;//Set to 1 when the Print Results box is checked in the probing operation.
+	probeClearance: number;//The approach distance in the direction of the probing operation. The probe will be positioned at this clearance distance prior to approaching the part.
+	probeOvertravel: number;//The maximum distance the probe can move beyond the expected contact point and still record a measurement.
+	probeSpacing: number;//The probe spacing between points on the selected face for Angle style probing.
+	toleranceAngle: number;//The acceptable angular deviation of the geometric feature.
+	tolerancePosition: number;//The acceptable positional deviation of the geometric feature.
+	toleranceSize: number;//The acceptable size deviation of the geometric feature.
+	width1: number;//The width of the boss or hole being probed. 
+	width2: number;//The width of the secondary walls (Y-axis) of a rectangular boss or hole being probed.
+	wrongSizeAction: undefined | "stopmessage";//This parameter will only be defined when probing a feature that defines a fixed size and the Wrong Size box is checked. The only valid setting when it is defined is the string stop-message.
 }; 
 declare var cycleExpanded: boolean
 

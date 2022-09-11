@@ -1,6 +1,12 @@
 //IMPORTS TYPES AND CONSTANTS(IGNORE)
 /// <reference path = "./types.ts" />
 /// <reference path = "./constant.ts" />
+
+	//1. Yellow: it indicates the rapid move of the toolpath
+	//2. Green: it indicates the lead-in/leadout of the toopath 
+	//3. Red: it indicates the Ramping move of the toolpath
+	//4. Blue: Most part of the toolpath are blue which indicates the cutting.
+
 //INFO(DESCRIPTIONS NAME LEGAL)
 let description = "MORI-5100";
 let longDescription = "3/5 AXIS POST FOR DMG MORI-5100";
@@ -23,23 +29,24 @@ let maximumCircularRadius = spatial(1000,UNIT.MILLIMETER);
 let minimumCircularSweep = toRad(0.01);
 let maximumCircularSweep = toRad(360);
 let allowHelicalMoves = true;
-let allowedCircularPlanes = undefined; // allow any circular motion
+let allowedCircularPlanes = undefined;//UNDEFINED = ALL
 //PROPERTIES
-properties = {
-	prettyPrint: false,//Pretty Print GCODE
-	preloadTools: false,//Preloads Tools In Magazine
-	optionalStops: true,//Optionally Stops Program At Key Moments
-	chipConveyor: false,//Enable Chip Conveyor
+let properties = {
+	enablePrettyPrint: false,//Pretty Print GCODE
+	enablePreloadingTools: false,//Preloads Tools In Magazine
+	enableOptionalStops: true,//Optionally Stops Program At Key Moments
+	enableChipConveyor: false,//Enable Chip Conveyor
+	smoothing: true,//Enable
+
 
 	allow3DArcs: false,// specifies that 3D circular arcs are allowed
 	useRadius: false,// specifies that arcs should be output using the radius (R word) instead of the I,J,and K words
 	forceIJK: false,// force output of IJK for G2/G3 when not using R word
 	useParametricFeed: false,// specifies that feed should be output using Q values
 	showNotes: false,// specifies that operation notes should be output
-	useSmoothing: false,// specifies if smoothing should be used or not
 	usePitchForTapping: true,// enable to use pitch instead of feed for the F-word for canned tapping cycles - note that your CNC control must be setup for pitch mode!
 	useG95: false,// use IPR/MPR instead of IPM/MPM
-	toolBreakageTolerance: 0.01,// value for which tool break detection will raise an alarm
+	toolBreakageTolerance: 0.01,// value for which tool break detection will raise an alarm. Probably something to od with a toolsetter. or auto breaking check.
 	useG54x4: false, // Fanuc 30i supports G54.4 for Workpiece Error Compensation
 };
 //FORMATS
@@ -48,8 +55,8 @@ var formats = Object.freeze({
 	g: createFormat({prefix:"G",decimals:1}),
 	//AUXILIARY COMMANDS
 	m: createFormat({prefix:"M",decimals:1}),
-
-	p: createFormat({prefix:"P",decimals:1}),
+	//MILLISECONDS
+	p: createFormat({prefix:"P",decimals:0}),
 	//TOOL LENGTH OFFSET
 	h: createFormat({prefix:"H",decimals:1}),
 	//DIAMETER
@@ -62,9 +69,6 @@ var formats = Object.freeze({
 	xyz: createFormat({decimals:(unit == UNIT.MILLIMETER ? 3 : 4),trimLeadZero:true,forceDecimal:true}),
 	ijk: createFormat({decimals:6,forceDecimal:true,trimLeadZero:true}),
 	abc: createFormat({decimals:3,forceDecimal:true,scale:DEG}),
-	//TIME
-	milliseconds: createFormat({prefix: "P",decimals:0}),
-	seconds: createFormat({decimals:3,forceDecimal:true}),
 	//ANGLE
 	taper: createFormat({decimals:1,scale:DEG}),
 	//FEED
@@ -126,18 +130,17 @@ enum ANGLE_PROBE {
 var currentWorkOffset: number;
 var optionalSection = false;
 var forceSpindleSpeed = false;
-var activeMovements: FeedContext[] | undefined; // do not use by default
+var activeMovements: FeedContext[] | undefined;// do not use by default
 var currentFeedId: number | undefined;
 var g68RotationMode = 0;
 var angularProbingMode: ANGLE_PROBE;
 var wfo: string | undefined;
-
 //([A-Z]+) ([A-Z_]+)([,\)])
 //$2: $1$3
 //WRITER
 const writer = Object.freeze({
 	block(...words:(string|undefined)[]): void {
-		return writeWords([[optionalSection?"/":""].concat(words.filter(word=>word!==undefined) as string[]).join(properties.prettyPrint?" ":"")]);
+		return writeWords([[optionalSection?"/":""].concat(words.filter(word=>word!==undefined) as string[]).join(properties.enablePrettyPrint?" ":"")]);
 	},
 	comment(...words:(string | undefined)[]): void {
 		return writeWords(["("+(words.filter(word=>word!==undefined||word==="")).map(word=>localize(filterText((word as string).toUpperCase()," ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,=_-/*#:")||"").replace(/[\(\)]/g,"")).join(" ")+")"]);
@@ -231,9 +234,9 @@ function onOpen() {
 		writer.comment("T"+tools[index].number,tools[index].description,"ZMIN" + tools[index].zRange.getMinimum().toFixed(1),tools[index].comment);
 	}
 	//BOUNDING BOX MAX TIME
-	writer.comment("BOUNDING BOX",(unit === UNIT.MILLIMETER ? "MM" : "INCH"),"X:"+bounds.lower.x.toFixed(1),"Y:"+bounds.lower.y.toFixed(1),"Z:"+bounds.lower.z.toFixed(1),"X:"+bounds.upper.x.toFixed(1),"Y:"+bounds.upper.y.toFixed(1),"Z:"+bounds.upper.z.toFixed(1));
-	writer.comment("MAX SPINDLE:",max.spindle.toFixed(0),"RPM","FEED:",max.feed.toFixed(0),(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"/MIN");
-	writer.comment("TIME",Math.floor(time/3600).toString()+":"+Math.floor(time / 60).toString()+":"+(time % 60).toFixed(0));
+	writer.comment("BOUNDING BOX",(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"  ","X:"+bounds.lower.x.toFixed(1),"Y:"+bounds.lower.y.toFixed(1),"Z:"+bounds.lower.z.toFixed(1),"X:"+bounds.upper.x.toFixed(1),"Y:"+bounds.upper.y.toFixed(1),"Z:"+bounds.upper.z.toFixed(1));
+	writer.comment("MAX  SPINDLE:",max.spindle.toFixed(0),"RPM","FEED:",max.feed.toFixed(0),(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"/MIN");
+	writer.comment("TIME  ",Math.floor(time/3600).toString()+":"+Math.floor(time / 60).toString()+":"+(time % 60).toFixed(0));
 	
 	//return comment and description
 	// 	if (false) {
@@ -272,12 +275,6 @@ function onOpen() {
 	// 			writeComment(comment);
 	// 		}
 	// 	}
-
-	//1. Yellow: it indicates the rapid move of the toolpath
-	//2. Green: it indicates the lead-in/leadout of the toopath 
-	//3. Red: it indicates the Ramping move of the toolpath
-	//4. Blue: Most part of the toolpath are blue which indicates the cutting.
-
 	//MACHINE CONFIGURATION COMMENT
 	writer.comment("MACHINE");
 	writer.comment(machineConfiguration.getVendor(),machineConfiguration.getModel(),machineConfiguration.getDescription());
@@ -427,9 +424,7 @@ function initializeActiveFeeds() {
 			activeMovements[MOVEMENT.LINK_DIRECT] = feedContext;
 		}
 		++id;
-	} else if(hasParameter("operation:tool_feedCutting") &&
-						 hasParameter("operation:tool_feedEntry") &&
-						 hasParameter("operation:tool_feedExit")) {
+	} else if(hasParameter("operation:tool_feedCutting") && hasParameter("operation:tool_feedEntry") && hasParameter("operation:tool_feedExit")) {
 		if (movements & (1 << MOVEMENT.LINK_DIRECT)) {
 			var feedContext = new FeedContext(id,localize("Direct"),Math.max(getParameter("operation:tool_feedCutting") as number,getParameter("operation:tool_feedEntry") as number,getParameter("operation:tool_feedExit") as number));
 			activeFeeds.push(feedContext);
@@ -579,10 +574,6 @@ function getWorkPlaneMachineABC(workPlane: Matrix) {
 	return abc;
 }
 
-function isProbeOperation() {
-	return (hasParameter("operation-strategy") && getParameter("operation-strategy") == "probe");
-}
-
 var probeOutputWorkOffset = 1;
 
 function onParameter(name: string,value: Value) {
@@ -600,7 +591,7 @@ function onSection() {
 	
 	var newWorkOffset = isFirstSection() || (getPreviousSection().workOffset != currentSection.workOffset); // work offset changes
 	var newWorkPlane = isFirstSection() || !isSameDirection(getPreviousSection().getGlobalFinalToolAxis(),currentSection.getGlobalInitialToolAxis());
-	var forceSmoothing =  properties.useSmoothing && (hasParameter("operation-strategy") && (getParameter("operation-strategy") == "drill") || !isFirstSection() && getPreviousSection().hasParameter("operation-strategy") && (getPreviousSection().getParameter("operation-strategy") == "drill")); // force smoothing in case !insertToolCall (2d chamfer)
+	var forceSmoothing =  properties.enableSmoothing && (hasParameter("operation-strategy") && (getParameter("operation-strategy") == "drill") || !isFirstSection() && getPreviousSection().hasParameter("operation-strategy") && (getPreviousSection().getParameter("operation-strategy") == "drill")); // force smoothing in case !insertToolCall (2d chamfer)
 	if (insertToolCall || newWorkOffset || newWorkPlane || forceSmoothing) {
 		
 	/*
@@ -642,7 +633,7 @@ function onSection() {
 		retracted = true;
 		onCommand(COMMAND.COOLANT_OFF);
 	
-		if (properties.optionalStops) {
+		if (properties.enableOptionalStops) {
 			onCommand(COMMAND.OPTIONAL_STOP);
 		}
 /*
@@ -686,7 +677,7 @@ function onSection() {
 		//writer.block(
 		 // outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4)
 		//);
-		if(properties.chipConveyor) {
+		if(properties.enableChipConveyor) {
 			onCommand(COMMAND.START_CHIP_TRANSPORT);
 		}
 		// if (forceMultiAxisIndexing || !is3D() || machineConfiguration.isMultiAxisConfiguration()) {
@@ -749,7 +740,7 @@ function onSection() {
 	// set coolant after we have positioned at Z
 	//setCoolant(tool.coolant);
 
-	if (properties.useSmoothing) {
+	if (properties.enableSmoothing) {
 		if (hasParameter("operation-strategy") && (getParameter("operation-strategy") != "drill")) {
 			if (setSmoothing(true)) {
 				// we force G43 using lengthCompensationActive
@@ -780,10 +771,10 @@ function onSection() {
 		
 		if (!machineConfiguration.isHeadConfiguration()) {
 			writer.block(modals.abs.format(0),modals.abs.format(90),wfo,outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4));
-		 	writer.block(modals.motion.format(0),conditional(insertToolCall,formats.g.format(currentSection.isMultiAxis() ? 43.5 : 43)),formats.h.format(lengthOffset),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.preloadTools?formats.t.format(nextTool.number):undefined);
+		 	writer.block(modals.motion.format(0),conditional(insertToolCall,formats.g.format(currentSection.isMultiAxis() ? 43.5 : 43)),formats.h.format(lengthOffset),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
 			lengthCompensationActive = true;
 		}else {
-			writer.block(modals.abs.format(90),modals.motion.format(0),formats.g.format(currentSection.isMultiAxis() ? (machineConfiguration.isMultiAxisConfiguration() ? 43.4 : 43.5) : 43),formats.h.format(lengthOffset),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.preloadTools?formats.t.format(nextTool.number):undefined);
+			writer.block(modals.abs.format(90),modals.motion.format(0),formats.g.format(currentSection.isMultiAxis() ? (machineConfiguration.isMultiAxisConfiguration() ? 43.4 : 43.5) : 43),formats.h.format(lengthOffset),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
 		}
 		modals.motion.reset();
 	} else { 
@@ -818,7 +809,7 @@ function onSection() {
 			return;
 		}
 		angularProbingMode = getAngularProbingMode();
-		writer.block(formats.g.format(65),"P" + 9832); // spin the probe on
+		writer.block(formats.g.format(65),"P" + 9832);//G65 MACRO 9832
 	}
 
 	retracted = false;
@@ -827,7 +818,7 @@ function onDwell(seconds: number) {
 	if (seconds > 99999.999) {
 		warning(localize("Dwelling time is out of range."));
 	}
-	writer.block(modals.f.format(94),formats.g.format(4),formats.milliseconds.format(Math.min(Math.max(1,seconds * 1000),99999999)));
+	writer.block(modals.f.format(94),formats.g.format(4),formats.p.format(Math.min(Math.max(1,seconds * 1000),99999999)));
 	writer.block(modals.f.format(properties.useG95 ? 95 : 94));
 }
 function onSpindleSpeed(speed: number) {
@@ -898,89 +889,75 @@ function onCyclePoint(x: number,y: number,z: number) {
 
 		var F = properties.useG95 ? cycle.feedrate/spindleSpeed : cycle.feedrate;
 
-		var P = (cycle.dwell == 0) ? 0 : Math.min(Math.max(1,cycle.dwell * 1000),99999999); // in milliseconds
+		var P = (cycle.dwell == 0) ? 0 : Math.min(Math.max(1,cycle.dwell * 1000),99999999);//IN MILLISECONDS
 
 		modals.retraction.reset();
 		
-		switch (cycleType) {
+		switch(cycleType) {
 			case "drilling":
-				writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(81),...getCommonCycle(x,y,z,cycle.retract),outputs.f.format(F));
-				break;
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(81),...getCommonCycle(x,y,z,cycle.retract),outputs.f.format(F));
 			case "counter-boring":
-				if (P > 0) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(82),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(F));
-				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(81),...getCommonCycle(x,y,z,cycle.retract),outputs.f.format(F));
-				}
-				break;
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(82),...getCommonCycle(x,y,z,cycle.retract),((P > 0)?formats.p.format(P):undefined),outputs.f.format(F));
 			case "chip-breaking":
 				if (P > 0) {// cycle.accumulatedDepth is ignored
-					expandCyclePoint(x,y,z);
+					return expandCyclePoint(x,y,z);
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(73),...getCommonCycle(x,y,z,cycle.retract),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(F));
+					return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(73),...getCommonCycle(x,y,z,cycle.retract),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(F));
 				}
-				break;
 			case "deep-drilling":
 				if (P > 0) {
-					expandCyclePoint(x,y,z);
+					return expandCyclePoint(x,y,z);
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(83),...getCommonCycle(x,y,z,cycle.retract),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(F));// conditional(P > 0,formats.milliseconds.format(P)),
+					return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(83),...getCommonCycle(x,y,z,cycle.retract),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(F));
 				}
-				break;
 			case "tapping":
-				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));
+				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));//M29 SYNCHRONIZED TAPPING SPINDLE SPEED
 				if (properties.usePitchForTapping) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.f.format(95),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND) ? 74 : 84),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.pitch.format(tool.threadPitch));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.f.format(95),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND) ? 74 : 84),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.pitch.format(tool.threadPitch));
 					force.feed();
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND) ? 74 : 84),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(F));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND) ? 74 : 84),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.f.format(F));
 				}
 				break;
 			case "left-tapping":
-				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));
+				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));//M29 SYNCHRONIZED TAPPING SPINDLE SPEED
 				if (properties.usePitchForTapping) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.f.format(95),modals.cycle.format(74),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.pitch.format(tool.threadPitch));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.f.format(95),modals.cycle.format(74),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.pitch.format(tool.threadPitch));
 					force.feed();
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(74),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(74),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
 				}
 				break;
 			case "right-tapping":
-				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));
+				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));//M29 SYNCHRONIZED TAPPING SPINDLE SPEED
 				if (properties.usePitchForTapping) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(84),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.pitch.format(tool.threadPitch));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(84),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.pitch.format(tool.threadPitch));
 					force.feed();
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(84),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(84),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
 				}
 				break;
 			case "tapping-with-chip-breaking":
 			case "left-tapping-with-chip-breaking":
 			case "right-tapping-with-chip-breaking":
-				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));
+				writer.block(formats.m.format(29),outputs.s.format(tool.spindleRPM));//M29 SYNCHRONIZED TAPPING SPINDLE SPEED
 				if (properties.usePitchForTapping) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND ? 74 : 84)),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.pitch.format(tool.threadPitch));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL.TAP_LEFT_HAND ? 74 : 84)),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.pitch.format(tool.threadPitch));
 					force.feed();
 				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL_TAP_LEFT_HAND ? 74 : 84)),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
+					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format((tool.type == TOOL.TAP_LEFT_HAND ? 74 : 84)),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),"Q" + formats.xyz.format(cycle.incrementalDepth),outputs.f.format(properties.useG95 ? tool.getTappingFeedrate()/spindleSpeed : tool.getTappingFeedrate()));
 				}
 				break;
 			case "fine-boring":
-				writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(76),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),"Q" + formats.xyz.format(cycle.shift),outputs.f.format(F));// not optional
-				break;
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(76),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),"Q" + formats.xyz.format(cycle.shift),outputs.f.format(F));// not optional
 			case "back-boring":
 				var dx = (modals.plane.getCurrent() == 19) ? cycle.backBoreDistance : 0;
 				var dy = (modals.plane.getCurrent() == 18) ? cycle.backBoreDistance : 0;
 				var dz = (modals.plane.getCurrent() == 17) ? cycle.backBoreDistance : 0;
-				writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(87),...getCommonCycle(x - dx,y - dy,z - dz,cycle.bottom),"Q" + formats.xyz.format(cycle.shift),formats.milliseconds.format(P),outputs.f.format(F));// not optional
+				writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(87),...getCommonCycle(x - dx,y - dy,z - dz,cycle.bottom),"Q" + formats.xyz.format(cycle.shift),formats.p.format(P),outputs.f.format(F));// not optional
 				break;
 			case "reaming":
-				if (P > 0) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(89),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(F));
-				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(85),...getCommonCycle(x,y,z,cycle.retract),outputs.f.format(F));
-				}
-				break;
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(89),...getCommonCycle(x,y,z,cycle.retract),((P > 0)?formats.p.format(P):undefined),outputs.f.format(F));
 			case "stop-boring":
 				if (P > 0) {
 					expandCyclePoint(x,y,z);
@@ -989,81 +966,74 @@ function onCyclePoint(x: number,y: number,z: number) {
 				}
 				break;
 			case "manual-boring":
-				writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(88),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(F));
-				break;
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(88),...getCommonCycle(x,y,z,cycle.retract),formats.p.format(P),outputs.f.format(F));
 			case "boring":
-				if (P > 0) {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(89),...getCommonCycle(x,y,z,cycle.retract),formats.milliseconds.format(P),outputs.f.format(F));// not optional
-				} else {
-					writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(85),...getCommonCycle(x,y,z,cycle.retract),outputs.f.format(F));
-				}
-				break;
-
+				return writer.block(modals.retraction.format(98),modals.abs.format(90),modals.cycle.format(89),...getCommonCycle(x,y,z,cycle.retract),((P > 0)?formats.p.format(P):undefined),outputs.f.format(F));// not optional
 			case "probing-x":
-				force.xyz();// move slowly always from clearance not retract
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				force.xyz();
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9811,"X" + formats.xyz.format(x + approach(cycle.approach1) * (cycle.probeClearance + tool.diameter/2)),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);// formats.tool.format(probeToolDiameterOffset)
 				break;
 			case "probing-y":
 				force.xyz();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9811,"Y" + formats.xyz.format(y + approach(cycle.approach1) * (cycle.probeClearance + tool.diameter/2)),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode); // formats.tool.format(probeToolDiameterOffset)
 				break;
 			case "probing-z":
 				force.xyz();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(Math.min(z - cycle.depth + cycle.probeClearance,cycle.retract)),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(Math.min(z - cycle.depth + cycle.probeClearance,cycle.retract)),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9811,"Z" + formats.xyz.format(z - cycle.depth),"S" + probeWorkOffsetCode);//"Q" + formats.xyz.format(cycle.probeOvertravel), // formats.tool.format(probeToolLengthOffset)
 				break;
 			case "probing-x-wall":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"X" + formats.xyz.format(cycle.width1),outputs.z.format(z - cycle.depth),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(cycle.probeClearance),"S" + probeWorkOffsetCode); // formats.tool.format(probeToolDiameterOffset)
 				break;
 			case "probing-y-wall":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"Y" + formats.xyz.format(cycle.width1),outputs.z.format(z - cycle.depth),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(cycle.probeClearance),"S" + probeWorkOffsetCode); // formats.tool.format(probeToolDiameterOffset)
 				break;
 			case "probing-x-channel":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"X" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);//not required "R" + formats.xyz.format(cycle.probeClearance), // formats.tool.format(probeToolDiameterOffset)
 				break;
 			case "probing-x-channel-with-island":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"X" + formats.xyz.format(cycle.width1),outputs.z.format(z - cycle.depth),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(-cycle.probeClearance),"S" + probeWorkOffsetCode);
 				break;
 			case "probing-y-channel":
 				outputs.y.reset();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"Y" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode); //not required "R" + formats.xyz.format(cycle.probeClearance),
 				break;
 			case "probing-y-channel-with-island":
 				outputs.y.reset();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"Y" + formats.xyz.format(cycle.width1),outputs.z.format(z - cycle.depth),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(-cycle.probeClearance),"S" + probeWorkOffsetCode);
 				break;
 			case "probing-xy-circular-boss":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9814,"D" + formats.xyz.format(cycle.width1),"Z" + formats.xyz.format(z - cycle.depth),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(cycle.probeClearance),"S" + probeWorkOffsetCode);
 				break;
 			case "probing-xy-circular-hole":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9814,"D" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);//not required "R" + formats.xyz.format(cycle.probeClearance),
 				break;
 			case "probing-xy-circular-hole-with-island":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9814,"Z" + formats.xyz.format(z - cycle.depth),"D" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(-cycle.probeClearance),"S" + probeWorkOffsetCode);
 				break;
 			case "probing-xy-rectangular-hole":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"X" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);// not required "R" + formats.xyz.format(-cycle.probeClearance),
 				writer.block(formats.g.format(65),"P" + 9812,"Y" + formats.xyz.format(cycle.width2),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);// not required "R" + formats.xyz.format(-cycle.probeClearance),
 				break;
 			case "probing-xy-rectangular-boss":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"Z" + formats.xyz.format(z - cycle.depth),"X" + formats.xyz.format(cycle.width1),"R" + formats.xyz.format(cycle.probeClearance),"S" + probeWorkOffsetCode);//"Q" + formats.xyz.format(cycle.probeOvertravel),
 				writer.block(formats.g.format(65),"P" + 9812,"Z" + formats.xyz.format(z - cycle.depth),"Y" + formats.xyz.format(cycle.width2),"R" + formats.xyz.format(cycle.probeClearance),"Q" + formats.xyz.format(cycle.probeOvertravel),"S" + probeWorkOffsetCode);
 				break;
 			case "probing-xy-rectangular-hole-with-island":
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9812,"Z" + formats.xyz.format(z - cycle.depth),"X" + formats.xyz.format(cycle.width1),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(-cycle.probeClearance),"S" + probeWorkOffsetCode);
 				writer.block(formats.g.format(65),"P" + 9812,"Z" + formats.xyz.format(z - cycle.depth),"Y" + formats.xyz.format(cycle.width2),"Q" + formats.xyz.format(cycle.probeOvertravel),"R" + formats.xyz.format(-cycle.probeClearance),"S" + probeWorkOffsetCode);
 				break;
@@ -1079,7 +1049,7 @@ function onCyclePoint(x: number,y: number,z: number) {
 				if ((cornerI != 0) && (cornerJ != 0)) {
 					g68RotationMode = 2;
 				}
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9815,outputs.x.format(cornerX),outputs.y.format(cornerY),conditional(cornerI != 0,"I" + formats.xyz.format(cornerI)),conditional(cornerJ != 0,"J" + formats.xyz.format(cornerJ)),"Q" + formats.xyz.format(cycle.probeOvertravel),conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE.USE_CAXIS),"S" + probeWorkOffsetCode));
 				break;
 			case "probing-xy-outer-corner":
@@ -1094,31 +1064,31 @@ function onCyclePoint(x: number,y: number,z: number) {
 				if ((cornerI != 0) && (cornerJ != 0)) {
 					g68RotationMode = 2;
 				}
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9816,outputs.x.format(cornerX),outputs.y.format(cornerY),conditional(cornerI != 0,"I" + formats.xyz.format(cornerI)),conditional(cornerJ != 0,"J" + formats.xyz.format(cornerJ)),"Q" + formats.xyz.format(cycle.probeOvertravel),conditional((g68RotationMode == 0) || (angularProbingMode == ANGLE_PROBE.USE_CAXIS),"S" + probeWorkOffsetCode));
 				break;
 			case "probing-x-plane-angle":
 				force.xyz();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9843,"X" + formats.xyz.format(x + approach(cycle.approach1) * (cycle.probeClearance + tool.diameter/2)),"D" + formats.xyz.format(cycle.probeSpacing),"Q" + formats.xyz.format(cycle.probeOvertravel));
 				g68RotationMode = 1;
 				break;
 			case "probing-y-plane-angle":
 				force.xyz();
-				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F)); // protected positioning move
+				writer.block(formats.g.format(65),"P" + 9810,outputs.z.format(z - cycle.depth),getFeed(F));
 				writer.block(formats.g.format(65),"P" + 9843,"Y" + formats.xyz.format(y + approach(cycle.approach1) * (cycle.probeClearance + tool.diameter/2)),"D" + formats.xyz.format(cycle.probeSpacing),"Q" + formats.xyz.format(cycle.probeOvertravel));
 				g68RotationMode = 1;
 				break;
 			default:
-				expandCyclePoint(x,y,z);
+				return expandCyclePoint(x,y,z);
 		}
 	} else {
-		if (isProbeOperation()) {
-			// do nothing
-		} else if (cycleExpanded) {
-			expandCyclePoint(x,y,z);
-		} else {
-			writer.block(outputs.x.format(x),outputs.y.format(y));
+		if (!isProbeOperation()) {
+			if(cycleExpanded) {
+				return expandCyclePoint(x,y,z);
+			} else {
+				return writer.block(outputs.x.format(x),outputs.y.format(y));
+			}
 		}
 	}
 }
@@ -1465,10 +1435,25 @@ function onCommand(command: COMMAND): void {
 			setCoolant(COOLANT.OFF);
 			return;
 		case COMMAND.ACTIVATE_SPEED_FEED_SYNCHRONIZATION:
+			//M29
 			return;
 		case COMMAND.DEACTIVATE_SPEED_FEED_SYNCHRONIZATION:
 			return;
+		case COMMAND.UNLOCK_MULTI_AXIS:
+			if(machineConfiguration.isMultiAxisConfiguration() && machineConfiguration.getNumberOfAxes() >= 4) {
+				writer.block(formats.g.format(10));//G10 UNLOCKS 4TH AXIS
+				if(machineConfiguration.getNumberOfAxes() == 5) {
+					writer.block(formats.g.format(12));//G12 UNLOCKS 5TH AXIS 
+ 				}
+			}
+			return;
 		case COMMAND.LOCK_MULTI_AXIS:
+			if(machineConfiguration.isMultiAxisConfiguration() && machineConfiguration.getNumberOfAxes() >= 4) {
+				writer.block(formats.g.format(11)); //G11 LOCKS 4TH AXIS
+				if(machineConfiguration.getNumberOfAxes() == 5) {
+					writer.block(formats.g.format(13));//G13 LOCKS 5TH AXIS
+ 				}
+			}
 			return;
 		case COMMAND.UNLOCK_MULTI_AXIS:
 			return;
@@ -1486,8 +1471,8 @@ function onCommand(command: COMMAND): void {
 			if (!toolChecked) {
 				//onCommand(COMMAND_STOP_SPINDLE);
 				onCommand(COMMAND.COOLANT_OFF);
-				writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19)); // retract
-				writer.block(formats.g.format(8),formats.p.format(0)); //WHATS GCODE 8
+				writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19));//RETRACT
+				//writer.block(formats.g.format(8),formats.p.format(0)); //WHATS GCODE 8
 				writer.block(formats.g.format(65),"P" + 9858,formats.t.format(tool.number),"H" + formats.xyz.format(properties.toolBreakageTolerance));//"B" + formats.xyz.format(0),
 				toolChecked = true;
 			}
