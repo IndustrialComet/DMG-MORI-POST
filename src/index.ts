@@ -49,6 +49,27 @@ let properties = {
 	toolBreakageTolerance: 0.01,// value for which tool break detection will raise an alarm. Probably something to od with a toolsetter. or auto breaking check.
 	useG54x4: false, // Fanuc 30i supports G54.4 for Workpiece Error Compensation
 };
+
+// fixed settings
+var firstFeedParameter = 500;
+var useMultiAxisFeatures = true;
+var forceMultiAxisIndexing = false; // force multi-axis indexing for 3D programs
+enum ANGLE_PROBE {
+	NOT_SUPPORTED,
+	USE_ROTATION,
+	USE_CAXIS,
+}
+// collected state
+var currentWorkOffset: number;
+var optionalSection = false;
+var forceSpindleSpeed = false;
+var activeMovements: FeedContext[] | undefined;// do not use by default
+var currentFeedId: number | undefined;
+var g68RotationMode = 0;
+var angularProbingMode: ANGLE_PROBE;
+var wfo: string | undefined;
+//([A-Z]+) ([A-Z_]+)([,\)])
+//$2: $1$3
 //FORMATS
 var formats = Object.freeze({
 	//COMMANDS
@@ -117,37 +138,17 @@ var modals = Object.freeze({
 	retraction: createModal({},formats.g),// G98-99
 	rotation: createModal({force:true},formats.g),// G68-G69
 });
-// fixed settings
-var firstFeedParameter = 500;
-var useMultiAxisFeatures = true;
-var forceMultiAxisIndexing = false; // force multi-axis indexing for 3D programs
-enum ANGLE_PROBE {
-	NOT_SUPPORTED,
-	USE_ROTATION,
-	USE_CAXIS,
-}
-// collected state
-var currentWorkOffset: number;
-var optionalSection = false;
-var forceSpindleSpeed = false;
-var activeMovements: FeedContext[] | undefined;// do not use by default
-var currentFeedId: number | undefined;
-var g68RotationMode = 0;
-var angularProbingMode: ANGLE_PROBE;
-var wfo: string | undefined;
-//([A-Z]+) ([A-Z_]+)([,\)])
-//$2: $1$3
 //WRITER
-const writer = Object.freeze({
+const writer = {
 	block(...words:(string|undefined)[]): void {
 		return writeWords([[optionalSection?"/":""].concat(words.filter(word=>word!==undefined) as string[]).join(properties.enablePrettyPrint?" ":"")]);
 	},
 	comment(...words:(string | undefined)[]): void {
 		return writeWords(["("+(words.filter(word=>word!==undefined||word==="")).map(word=>localize(filterText((word as string).toUpperCase()," ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,=_-/*#:")||"").replace(/[\(\)]/g,"")).join(" ")+")"]);
 	},
-});
+};
 //FORCE
-const force = Object.freeze({
+var force = {
 	//FORCE OUPUT XYZ
 	xyz() {
 		outputs.x.reset();
@@ -171,9 +172,137 @@ const force = Object.freeze({
 		force.abc();
 		force.feed();
 	}
-});
-//ON OPEN
-//POST PROCESSOR INITIALIZATION
+};
+//FEED
+
+//COOLANT
+var coolant = {
+	current: COOLANT.OFF,
+	set(mode: COOLANT): string | undefined {
+		if(isProbeOperation()) {
+			mode = COOLANT.OFF;
+		}
+
+		if(mode === coolant.current) return "";//writer.block(formats.m.format((currentCoolantMode == COOLANT.THROUGH_TOOL) ? 89 : 9));
+
+		let current = coolant.current;
+
+		coolant.current = mode;
+
+		switch(mode) {
+			case COOLANT.OFF:
+				switch(current) {
+					case COOLANT.THROUGH_TOOL:
+						return formats.m.format(89);
+					default:
+						return formats.m.format(9);
+				}
+			case COOLANT.AIR:
+				//return formats.m.format(51);
+			case COOLANT.AIR_THROUGH_TOOL:
+				//return formats.m.format(165);
+			case COOLANT.FLOOD:
+				return formats.m.format(8);
+			case COOLANT.FLOOD_MIST:
+				//return formats.m.format();
+			case COOLANT.FLOOD_THROUGH_TOOL:
+				return formats.m.format(88);
+			case COOLANT.MIST:
+				//return formats.m.format(55);
+			case COOLANT.SUCTION:
+				//return formats.m.format(180);
+			case COOLANT.THROUGH_TOOL:
+				//return formats.m.format();
+			default:
+				onUnsupportedCoolant(mode);//ERROR
+				return formats.m.format(9);
+		}
+	}
+}
+//SMOOTHING
+var smoothing = {
+	current: false,
+	set(mode: boolean): boolean {
+		if(mode === smoothing.current) return false;
+		// 1) Make sure G49 is called before the execution of G5.1 Q1 Rx
+		// 2) G5.1 Q1 Rx must be engaged BEFORE G43-Tool Length Comp
+		// 3) AICC and AIAPC need to be turned on and off for each tool
+		// 4) AICC and AIAPC does not apply to canned drilling cycles
+ 		// validate(!lengthCompensationActive,"Length compensation is active while trying to update smoothing.");
+		smoothing.current = mode;
+		writer.block(formats.g.format(5.1),mode ? "Q1" : "Q0");
+		writer.block(formats.g.format(332),"R3.");//////////////////WARNING///R4 is longer but higher precision
+
+		return true;
+	}
+}
+//WORK PLANE
+var workPlane = {
+	current: null as null | Vector,
+	abc: {
+		current: null as Vector | null,
+		closest: false,
+	},
+	force() {
+		workPlane.current = null;
+	},
+	reset() {
+		workPlane.set(new Vector());
+	},
+	set(abc: Vector) {
+		if(!forceMultiAxisIndexing && is3D() && !machineConfiguration.isMultiAxisConfiguration()) return;
+	
+		if(!((workPlane.current === null) || formats.abc.areDifferent(abc.x,workPlane.current.x) || formats.abc.areDifferent(abc.y,workPlane.current.y) || formats.abc.areDifferent(abc.z,workPlane.current.z))) return;
+	
+		onCommand(COMMAND.UNLOCK_MULTI_AXIS);
+	
+		if(useMultiAxisFeatures) {
+			if (abc.isNonZero()) {
+				writer.block(formats.g.format(68.2),"X" + formats.xyz.format(0),"Y" + formats.xyz.format(0),"Z" + formats.xyz.format(0),"I" + formats.abc.format(abc.x),"J" + formats.abc.format(abc.y),"K" + formats.abc.format(abc.z)); // set frame
+				writer.block(formats.g.format(53.1)); // turn machine
+			} else {
+				writer.block(formats.g.format(69)); // cancel frame
+			}
+		} else {
+			modals.motion.reset();
+			writer.block(modals.motion.format(0),conditional(machineConfiguration.isMachineCoordinate(0),"A" + formats.abc.format(abc.x)),conditional(machineConfiguration.isMachineCoordinate(1),"B" + formats.abc.format(abc.y)),conditional(machineConfiguration.isMachineCoordinate(2),"C" + formats.abc.format(abc.z)));
+		}
+		
+		onCommand(COMMAND.LOCK_MULTI_AXIS);
+	
+		workPlane.current = abc;
+	},
+	get(matrix: Matrix): Vector {
+		let abc = machineConfiguration.getABC(matrix);
+		
+		abc = (workPlane.abc.closest && workPlane.abc.current)? machineConfiguration.remapToABC(abc,workPlane.abc.current) : machineConfiguration.getPreferredABC(abc);
+
+		try {
+			workPlane.abc.current = machineConfiguration.remapABC(abc);
+		} catch (e) {
+			error(localize("Machine angles not supported") + ":" + conditional(machineConfiguration.isMachineCoordinate(0)," A" + formats.abc.format(abc.x)) + conditional(machineConfiguration.isMachineCoordinate(1)," B" + formats.abc.format(abc.y)) + conditional(machineConfiguration.isMachineCoordinate(2)," C" + formats.abc.format(abc.z)));
+		}
+		
+		let direction = machineConfiguration.getDirection(abc);
+
+		if (!isSameDirection(direction,matrix.forward)) {error(localize("Orientation not supported."))};
+		
+		if (!machineConfiguration.isABCSupported(abc)) {error(localize("Work plane is not supported") + ":" + conditional(machineConfiguration.isMachineCoordinate(0)," A" + formats.abc.format(abc.x)) + conditional(machineConfiguration.isMachineCoordinate(1)," B" + formats.abc.format(abc.y)) + conditional(machineConfiguration.isMachineCoordinate(2)," C" + formats.abc.format(abc.z)))};
+	
+		var tcp = false;
+
+		if (tcp) {
+			setRotation(matrix); // TCP mode
+		} else {
+			var O = machineConfiguration.getOrientation(abc);
+			var R = machineConfiguration.getRemainingOrientation(abc,matrix);
+			setRotation(R);
+		}
+		
+		return abc;
+	},
+}
+//ON OPEN(POST PROCESSOR INITILIZATION)
 function onOpen() {
 	//SETUP?
 	if(false) {
@@ -194,7 +323,7 @@ function onOpen() {
 		outputs.c.disable();
 	}
 	//PROGRAM START
-	writer.block("%");
+	writer.block("%");//% FILE START
 	//PROGRAM NUMBER
 	if(programName === undefined) {
 		return error(localize("PROGRAM NAME IS UNDEFINED"));
@@ -294,6 +423,7 @@ function onOpen() {
 	//NO PARAMETRIC FEED AND G95
 	if (properties.useG95 && properties.useParametricFeed) return error(localize("Parametric feed is not supported when using G95."));
 }
+//ON COMMENT(MANUAL NC INSERTION)
 function onComment(message: Value) {
 	writer.comment(...String(message).split(";"));
 }
@@ -307,24 +437,6 @@ function disableLengthCompensation(force: boolean) {
 	 	// writer.block(formats.g.format(49));
 		lengthCompensationActive = false;
 	}
-}
-
-var currentSmoothing = false;
-
-function setSmoothing(mode: boolean) {
-	if (mode == currentSmoothing) {
-		return false;
-	}
-	// 1) Make sure G49 is called before the execution of G5.1 Q1 Rx
-	// 2) G5.1 Q1 Rx must be engaged BEFORE G43-Tool Length Comp
-	// 3) AICC and AIAPC need to be turned on and off for each tool
-	// 4) AICC and AIAPC does not apply to canned drilling cycles
- // validate(!lengthCompensationActive,"Length compensation is active while trying to update smoothing.");
-
-	currentSmoothing = mode;
-	writer.block(formats.g.format(5.1),mode ? "Q1" : "Q0");
-	writer.block(formats.g.format(332),"R3.");//////////////////WARNING///R4 is longer but higher precision
-	return true;
 }
 
 class FeedContext {
@@ -477,103 +589,6 @@ function initializeActiveFeeds() {
 	}
 }
 
-var currentWorkPlaneABC: undefined | Vector = undefined;
-
-function forceWorkPlane() {
-	currentWorkPlaneABC = undefined;
-}
-
-function setWorkPlane(abc: Vector) {
-	if (!forceMultiAxisIndexing && is3D() && !machineConfiguration.isMultiAxisConfiguration()) {
-		return; // ignore
-	}
-
-	if (!((currentWorkPlaneABC == undefined) ||
-				formats.abc.areDifferent(abc.x,currentWorkPlaneABC.x) ||
-				formats.abc.areDifferent(abc.y,currentWorkPlaneABC.y) ||
-				formats.abc.areDifferent(abc.z,currentWorkPlaneABC.z))) {
-		return; // no change
-	}
-
-	onCommand(COMMAND.UNLOCK_MULTI_AXIS);
-
-	if (useMultiAxisFeatures) {
-		if (abc.isNonZero()) {
-			writer.block(formats.g.format(68.2),"X" + formats.xyz.format(0),"Y" + formats.xyz.format(0),"Z" + formats.xyz.format(0),"I" + formats.abc.format(abc.x),"J" + formats.abc.format(abc.y),"K" + formats.abc.format(abc.z)); // set frame
-			writer.block(formats.g.format(53.1)); // turn machine
-		} else {
-			writer.block(formats.g.format(69)); // cancel frame
-		}
-	} else {
-		modals.motion.reset();
-		writer.block(
-			modals.motion.format(0),
-			conditional(machineConfiguration.isMachineCoordinate(0),"A" + formats.abc.format(abc.x)),
-			conditional(machineConfiguration.isMachineCoordinate(1),"B" + formats.abc.format(abc.y)),
-			conditional(machineConfiguration.isMachineCoordinate(2),"C" + formats.abc.format(abc.z))
-		);
-	}
-	
-	onCommand(COMMAND.LOCK_MULTI_AXIS);
-
-	currentWorkPlaneABC = abc;
-}
-
-var closestABC = false; // choose closest machine angles
-var currentMachineABC: Vector | null;
-
-function getWorkPlaneMachineABC(workPlane: Matrix) {
-	var W = workPlane; // map to global frame
-
-	var abc = machineConfiguration.getABC(W);
-	if (closestABC) {
-		if (currentMachineABC) {
-			abc = machineConfiguration.remapToABC(abc,currentMachineABC);
-		} else {
-			abc = machineConfiguration.getPreferredABC(abc);
-		}
-	} else {
-		abc = machineConfiguration.getPreferredABC(abc);
-	}
-	
-	try {
-		abc = machineConfiguration.remapABC(abc);
-		currentMachineABC = abc;
-	} catch (e) {
-		error(
-			localize("Machine angles not supported") + ":"
-			+ conditional(machineConfiguration.isMachineCoordinate(0)," A" + formats.abc.format(abc.x))
-			+ conditional(machineConfiguration.isMachineCoordinate(1)," B" + formats.abc.format(abc.y))
-			+ conditional(machineConfiguration.isMachineCoordinate(2)," C" + formats.abc.format(abc.z))
-		);
-	}
-	
-	var direction = machineConfiguration.getDirection(abc);
-	if (!isSameDirection(direction,W.forward)) {
-		error(localize("Orientation not supported."));
-	}
-	
-	if (!machineConfiguration.isABCSupported(abc)) {
-		error(
-			localize("Work plane is not supported") + ":"
-			+ conditional(machineConfiguration.isMachineCoordinate(0)," A" + formats.abc.format(abc.x))
-			+ conditional(machineConfiguration.isMachineCoordinate(1)," B" + formats.abc.format(abc.y))
-			+ conditional(machineConfiguration.isMachineCoordinate(2)," C" + formats.abc.format(abc.z))
-		);
-	}
-
-	var tcp = false;
-	if (tcp) {
-		setRotation(W); // TCP mode
-	} else {
-		var O = machineConfiguration.getOrientation(abc);
-		var R = machineConfiguration.getRemainingOrientation(abc,W);
-		setRotation(R);
-	}
-	
-	return abc;
-}
-
 var probeOutputWorkOffset = 1;
 
 function onParameter(name: string,value: Value) {
@@ -610,7 +625,7 @@ function onSection() {
 		
 		force.xyz();
 
-		setSmoothing(false);
+		smoothing.set(false);
 	}
 	// if (hasParameter("operation-comment")) {
 	// 	writer.comment(getParameter("operation-comment") as string);
@@ -628,7 +643,7 @@ function onSection() {
 	// }
 	
 	if (insertToolCall) {
-		forceWorkPlane();
+		workPlane.force();
 		
 		retracted = true;
 		onCommand(COMMAND.COOLANT_OFF);
@@ -715,7 +730,7 @@ function onSection() {
 		// set working plane after datum shift
 
 		if (currentSection.isMultiAxis()) {
-			forceWorkPlane();
+			workPlane.force();
 			cancelTransformation();
 		} else {
 			var abc = new Vector(0,0,0);
@@ -724,9 +739,9 @@ function onSection() {
 				abc = new Vector(-eulerXYZ.x,-eulerXYZ.y,-eulerXYZ.z);
 				cancelTransformation();
 			} else {
-				abc = getWorkPlaneMachineABC(currentSection.workPlane);
+				abc = workPlane.get(currentSection.workPlane);
 			}
-			setWorkPlane(abc);
+			workPlane.set(abc);
 		}
 	} else { 
 		var remaining = currentSection.workPlane;
@@ -738,15 +753,15 @@ function onSection() {
 	}
 
 	// set coolant after we have positioned at Z
-	//setCoolant(tool.coolant);
+	//coolant.set(tool.coolant);
 
 	if (properties.enableSmoothing) {
 		if (hasParameter("operation-strategy") && (getParameter("operation-strategy") != "drill")) {
-			if (setSmoothing(true)) {
+			if (smoothing.set(true)) {
 				// we force G43 using lengthCompensationActive
 			}
 		} else {
-			if (setSmoothing(false)) {
+			if (smoothing.set(false)) {
 				// we force G43 using lengthCompensationActive
 			}
 		}
@@ -771,17 +786,17 @@ function onSection() {
 		
 		if (!machineConfiguration.isHeadConfiguration()) {
 			writer.block(modals.abs.format(0),modals.abs.format(90),wfo,outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4));
-		 	writer.block(modals.motion.format(0),conditional(insertToolCall,formats.g.format(currentSection.isMultiAxis() ? 43.5 : 43)),formats.h.format(lengthOffset),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
+		 	writer.block(modals.motion.format(0),conditional(insertToolCall,formats.g.format(currentSection.isMultiAxis() ? 43.5 : 43)),formats.h.format(lengthOffset),outputs.z.format(initialPosition.z),coolant.set(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
 			lengthCompensationActive = true;
 		}else {
-			writer.block(modals.abs.format(90),modals.motion.format(0),formats.g.format(currentSection.isMultiAxis() ? (machineConfiguration.isMultiAxisConfiguration() ? 43.4 : 43.5) : 43),formats.h.format(lengthOffset),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.z.format(initialPosition.z),setCoolant(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
+			writer.block(modals.abs.format(90),modals.motion.format(0),formats.g.format(currentSection.isMultiAxis() ? (machineConfiguration.isMultiAxisConfiguration() ? 43.4 : 43.5) : 43),formats.h.format(lengthOffset),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.z.format(initialPosition.z),coolant.set(tool.coolant),properties.enablePreloadingTools?formats.t.format(nextTool.number):undefined);
 		}
 		modals.motion.reset();
 	} else { 
 		if(forceSpindleSpeed || (formats.s.areDifferent(tool.spindleRPM,outputs.s.getCurrent() as number)) || (tool.isClockwise() != getPreviousSection().getTool().isClockwise())) {
-			writer.block(modals.abs.format(90),modals.motion.format(0),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4),setCoolant(tool.coolant));
+			writer.block(modals.abs.format(90),modals.motion.format(0),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y),outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4),coolant.set(tool.coolant));
 		} else {
-			writer.block(setCoolant(tool.coolant));
+			writer.block(coolant.set(tool.coolant));
 			writer.block(modals.abs.format(90),modals.motion.format(0),outputs.x.format(initialPosition.x),outputs.y.format(initialPosition.y));
 		 }
 	 }
@@ -1373,39 +1388,6 @@ function onCircular(clockwise: boolean,cx: number,cy: number,cz: number,x: numbe
 		}
 	}
 }
-var currentCoolantMode = COOLANT.OFF;
-function setCoolant(coolant: number) {
-	if (isProbeOperation()) { // avoid coolant output for probing
-		coolant = COOLANT.OFF;
-	}
-
-	if (coolant == currentCoolantMode) return; // coolant is already active
-	
-	if (coolant == COOLANT.OFF) {
-		writer.block(formats.m.format((currentCoolantMode == COOLANT.THROUGH_TOOL) ? 89 : 9));
-		currentCoolantMode = COOLANT.OFF;
-		return;
-	}
-
-	var m;
-	switch (coolant) {
-		case COOLANT.FLOOD:
-			m = 8;
-			break;
-		case COOLANT.THROUGH_TOOL:
-			m = 88;
-			break;
-		default:
-			onUnsupportedCoolant(coolant);
-			m = 9;
-	}
-	
-	if (m) {
-		//writer.block(formats.m.format(m)); //take out the writer.block contained in the function
-		currentCoolantMode = coolant;
-		return formats.m.format(m); //output as formats.m instead of block 
-	}
-}
 //COMMAND
 function onCommand(command: COMMAND): void {
 	switch (command) {
@@ -1429,11 +1411,9 @@ function onCommand(command: COMMAND): void {
 		case COMMAND.LOAD_TOOL:
 			return writer.block(formats.m.format(6));
 		case COMMAND.COOLANT_ON:
-			setCoolant(COOLANT.FLOOD);
-			return;
+			return writer.block(coolant.set(COOLANT.FLOOD));
 		case COMMAND.COOLANT_OFF:
-			setCoolant(COOLANT.OFF);
-			return;
+			return writer.block(coolant.set(COOLANT.OFF));
 		case COMMAND.ACTIVATE_SPEED_FEED_SYNCHRONIZATION:
 			//M29
 			return;
@@ -1538,25 +1518,23 @@ function onClose() {
 
 	onCommand(COMMAND.COOLANT_OFF);
 
-	writer.block(modals.f.format(0),formats.g.format(49));//FEED RATE OFF
-	writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19)); // retract
+	writer.block(modals.f.format(0),formats.g.format(49));//F0//G49 FEED RATE OFF
+	writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19));//G53 MACHINE COORDIANTE Z0 M19 ORIENTATE SPINDLE
 	retracted = true;
-	
 	//disableLengthCompensation(true);
-	setSmoothing(false);
+	smoothing.set(false);
 
 	outputs.z.reset();
 
-	setWorkPlane(new Vector(0,0,0)); // reset working plane
+	workPlane.reset();//RESET
 
 	if (properties.useG54x4) {
-		writer.block(formats.g.format(54.4),"P0");
+		writer.block(formats.g.format(54.4),"P0");//G54.4  P0
 	}
-
+	//HOME
 	if (!machineConfiguration.hasHomePositionX() && !machineConfiguration.hasHomePositionY()) {
-		// 90/91 mode is don't care
-		writer.block(formats.g.format(53),"X" + formats.xyz.format(-25.)); // return to home
-		writer.block(formats.g.format(53),"Y" + formats.xyz.format(0)); // return to home
+		writer.block(formats.g.format(53),"X" + formats.xyz.format(-25.));//G53 MACHINE COORD X-25.
+		writer.block(formats.g.format(53),"Y" + formats.xyz.format(0));//G53 MACHINE COORD Y0
 	} else {
 		var homeX;
 		if (machineConfiguration.hasHomePositionX()) {
@@ -1566,13 +1544,13 @@ function onClose() {
 		if (machineConfiguration.hasHomePositionY()) {
 			homeY = "Y" + formats.xyz.format(machineConfiguration.getHomePositionY());
 		}
-		writer.block(modals.abs.format(90),formats.g.format(53),modals.motion.format(0),homeX,homeY);
+		writer.block(modals.abs.format(90),formats.g.format(53),modals.motion.format(0),homeX,homeY);//G90 ABSOLUTE G53 MACHINE COORD G0 POSITION X0 Y0
 	}
 
 	onImpliedCommand(COMMAND.END);
 	onImpliedCommand(COMMAND.STOP_SPINDLE);
-
+	//END PROGRAM
 	writer.block(formats.m.format(30));//M30 END PROGRAM
-	
+	//END FILE
 	writeln("%");//% END FILE
 }
