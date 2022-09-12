@@ -36,7 +36,7 @@ let properties = {
 	enablePreloadingTools: false,//Preloads Tools In Magazine
 	enableOptionalStops: true,//Optionally Stops Program At Key Moments
 	enableChipConveyor: false,//Enable Chip Conveyor
-	smoothing: true,//Enable
+	enableSmoothing: true,//Enable
 
 
 	allow3DArcs: false,// specifies that 3D circular arcs are allowed
