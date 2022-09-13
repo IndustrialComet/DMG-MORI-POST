@@ -2,10 +2,10 @@
 /// <reference path = "./types.ts" />
 /// <reference path = "./constant.ts" />
 
-	//1. Yellow: it indicates the rapid move of the toolpath
-	//2. Green: it indicates the lead-in/leadout of the toopath 
-	//3. Red: it indicates the Ramping move of the toolpath
-	//4. Blue: Most part of the toolpath are blue which indicates the cutting.
+//1. Yellow: it indicates the rapid move of the toolpath
+//2. Green: it indicates the lead-in/leadout of the toopath 
+//3. Red: it indicates the Ramping move of the toolpath
+//4. Blue: Most part of the toolpath are blue which indicates the cutting.
 
 //INFO(DESCRIPTIONS NAME LEGAL)
 let description = "MORI-5100";
