@@ -1,6 +1,9 @@
-//IMPORTS TYPES AND CONSTANTS(IGNORE)
+//IMPORTS TYPES AND CONSTANTS IGNORE
 /// <reference path = "./types.ts" />
 /// <reference path = "./constant.ts" />
+
+//([A-Z]+) ([A-Z_]+)([,\)])
+//$2: $1$3
 
 //1. Yellow: it indicates the rapid move of the toolpath
 //2. Green: it indicates the lead-in/leadout of the toopath 
@@ -49,8 +52,7 @@ let properties = {
 	toolBreakageTolerance: 0.01,// value for which tool break detection will raise an alarm. Probably something to od with a toolsetter. or auto breaking check.
 	useG54x4: false, // Fanuc 30i supports G54.4 for Workpiece Error Compensation
 };
-
-// fixed settings
+//CONSTANT SETTINGS
 var firstFeedParameter = 500;
 var useMultiAxisFeatures = true;
 var forceMultiAxisIndexing = false; // force multi-axis indexing for 3D programs
@@ -59,7 +61,8 @@ enum ANGLE_PROBE {
 	USE_ROTATION,
 	USE_CAXIS,
 }
-// collected state
+//STATE
+var MAX_TOOLS = 30;
 var currentWorkOffset: number;
 var optionalSection = false;
 var forceSpindleSpeed = false;
@@ -68,8 +71,6 @@ var currentFeedId: number | undefined;
 var g68RotationMode = 0;
 var angularProbingMode: ANGLE_PROBE;
 var wfo: string | undefined;
-//([A-Z]+) ([A-Z_]+)([,\)])
-//$2: $1$3
 //FORMATS
 var formats = Object.freeze({
 	//COMMANDS
@@ -363,7 +364,7 @@ function onOpen() {
 		writer.comment("T"+tools[index].number,tools[index].description,"ZMIN" + tools[index].zRange.getMinimum().toFixed(1),tools[index].comment);
 	}
 	//BOUNDING BOX MAX TIME
-	writer.comment("BOUNDING BOX",(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"  ","X:"+bounds.lower.x.toFixed(1),"Y:"+bounds.lower.y.toFixed(1),"Z:"+bounds.lower.z.toFixed(1),"X:"+bounds.upper.x.toFixed(1),"Y:"+bounds.upper.y.toFixed(1),"Z:"+bounds.upper.z.toFixed(1));
+	writer.comment("BOUNDING BOX:",(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"  ","X:"+bounds.lower.x.toFixed(1),"Y:"+bounds.lower.y.toFixed(1),"Z:"+bounds.lower.z.toFixed(1),"X:"+bounds.upper.x.toFixed(1),"Y:"+bounds.upper.y.toFixed(1),"Z:"+bounds.upper.z.toFixed(1));
 	writer.comment("MAX  SPINDLE:",max.spindle.toFixed(0),"RPM","FEED:",max.feed.toFixed(0),(unit === UNIT.MILLIMETER ? "MM" : "INCH")+"/MIN");
 	writer.comment("TIME  ",Math.floor(time/3600).toString()+":"+Math.floor(time / 60).toString()+":"+(time % 60).toFixed(0));
 	
@@ -619,9 +620,9 @@ function onSection() {
 
 		onCommand(COMMAND.COOLANT_OFF);
 
-		writer.block(modals.f.format(0),formats.g.format(49));
-		writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19)); //RETRACT
-		writer.block(modals.abs.format(90));
+		writer.block(modals.f.format(0),formats.g.format(49));//G49
+		writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19));//RETRACT
+		writer.block(modals.abs.format(90));//G90 ABSOLUTE
 		
 		force.xyz();
 
@@ -656,14 +657,12 @@ function onSection() {
 			onCommand(COMMAND.OPTIONAL_STOP);
 		}
 	*/
-		if (tool.number > 99) {
-			warning(localize("Tool number exceeds maximum value."));
-		}
+		if (tool.number > MAX_TOOLS) return warning(localize("Tool number exceeds maximum value."));
 
 		disableLengthCompensation(false);
 
  		writer.block(formats.t.format(tool.number));//T[TOOL NUMBER]: CHANGE TOOL NUMBER
-		onCommand(COMMAND.LOAD_TOOL);
+		onCommand(COMMAND.LOAD_TOOL);//M06 LOAD TOOL
 
 		// if (properties.preloadTools) { //IF PRELOAD IS ON IT CHANGES THE MAGAZINE BEFORE THE TOOL CHANGE
 		// 	var nextTool = getNextTool(tool.number);
@@ -1136,7 +1135,7 @@ function onRapid(_x: number,_y: number,_z: number) {
 		force.feed();
 	}
 }
-//LINEAR
+//ON LINEAR
 function onLinear(_x: number,_y: number,_z: number,feed: number) {
 	let x = outputs.x.format(_x);
 	let y = outputs.y.format(_y);
