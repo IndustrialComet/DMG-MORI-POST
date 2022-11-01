@@ -5,6 +5,13 @@
 //([A-Z]+) ([A-Z_]+)([,\)])
 //$2: $1$3
 
+//54-59
+//
+
+
+
+
+
 //PATHS
 //	YELLOW: RAPID
 //	GREEN: LEAD-IN/OUT
@@ -46,15 +53,13 @@ let properties = {
 	useRadius: false,// specifies that arcs should be output using the radius (R word) instead of the I,J,and K words
 	forceIJK: false,// force output of IJK for G2/G3 when not using R word
 	useParametricFeed: false,// specifies that feed should be output using Q values
-	showNotes: false,// specifies that operation notes should be output
 	usePitchForTapping: true,// enable to use pitch instead of feed for the F-word for canned tapping cycles - note that your CNC control must be setup for pitch mode!
 	useG95: false,// use IPR/MPR instead of IPM/MPM
-	toolBreakageTolerance: 0.01,// value for which tool break detection will raise an alarm. Probably something to od with a toolsetter. or auto breaking check.
 	useG54x4: false, // Fanuc 30i supports G54.4 for Workpiece Error Compensation
 };
 //CONSTANTS SETTINGS
-const MAX_TOOLS = 30;
-const SPINDLE_SPEED = 24000;
+const MAX_TOOLS = 400;
+const MAX_SPINDLE_SPEED = 24000;
 
 var firstFeedParameter = 500;
 var useMultiAxisFeatures = true;
@@ -328,7 +333,7 @@ function onOpen() {
 	if(programName === undefined) {
 		return error(localize("PROGRAM NAME IS UNDEFINED"));
 	} else {
-		let programNumber = Number(programName);
+		let programNumber = parseInt(programName);
 		//VERIFY PROGRAM NUMBER
 		if(programNumber !== programNumber || programNumber === Infinity || programNumber === -Infinity) return error(localize("PROGRAM NUMBER IS NOT A NUMBER"));
 		if(programNumber < 1 || programNumber > 9999) return error(localize("PROGRAM NUMBER IS OUT OF RANGE"));
@@ -341,6 +346,9 @@ function onOpen() {
 	let bounds = new BoundingBox(); 
 	let time = 0;
 	let max = {spindle: 0,feed: 0};
+	let offsets: {
+		[key: string]: Boolean,
+	} = {};
 	//LOOP OVER SECTIONS
 	for(let index = 0;index < getNumberOfSections();index++) {
 		let section = getSection(index);
@@ -360,15 +368,23 @@ function onOpen() {
 			tools[sectionTool.number] = {number: sectionTool.number,zRange: zRange,description: sectionTool.desciption,comment: sectionTool.comment}
 		} else {
 			tools[sectionTool.number].zRange.expandToRange(zRange);
-			
 		}
+
+		offsets[section.workOffset] = true;
 	}
+	//WORK OFFSETS
+	writer.comment("WORK OFFSETS: " + Object.keys(offsets).map(offset=> {
+		let number = parseInt(offset);
+		if(number >= 1 && number <= 48) {
+			return formats.g.format(54) + "P" + offset;
+		}
+		return formats.g.format(parseInt(offset));
+	}).join(","));
 	//TOOLS
 	writer.comment("TOOLS");
 	tools.filter(current => current !== undefined).forEach(current => {
-		writer.comment("T"+current.number,"ZMIN: " + current.zRange.getMinimum().toFixed(1));
+		writer.comment("T"+current.number,"ZMIN: " + current.zRange.getMinimum().toFixed(3),"ZMAX: " + current.zRange.getMaximum().toFixed(3));
 	});
-		
 	//BOUNDING BOX MAX TIME
 	writer.comment("BOUNDING BOX:",(unit === UNIT.MILLIMETER ? "MM" : "INCH"))
 	writer.comment("X:" + bounds.lower.x.toFixed(3),"Y:" + bounds.lower.y.toFixed(3),"Z:" + bounds.lower.z.toFixed(3));
@@ -392,7 +408,9 @@ function onOpen() {
 			break;
 	}
 	//M0 TEMPORARY STOP
-	writer.block(formats.m.format(0));
+	if (properties.OptionalStops) {
+		onCommand(COMMAND.OPTIONAL_STOP);
+	}
 	//NO PARAMETRIC FEED AND G95
 	if (properties.useG95 && properties.useParametricFeed) return error(localize("Parametric feed is not supported when using G95."));
 }
@@ -607,7 +625,7 @@ function onSection() {
 			onCommand(COMMAND.OPTIONAL_STOP);
 		}
 
-		if (tool.number > MAX_TOOLS) return warning(localize("Tool number exceeds maximum value."));
+		if (tool.number > MAX_TOOLS) return error(localize("Tool number exceeds maximum value."));
 
 		disableLengthCompensation(false);
 
@@ -619,7 +637,7 @@ function onSection() {
 		forceSpindleSpeed = false;
 		
 		if (tool.spindleRPM < 1) return error(localize("Spindle speed out of range."));
-		if (tool.spindleRPM > SPINDLE_SPEED) return error(localize("Spindle speed exceeds maximum value."));
+		if (tool.spindleRPM > MAX_SPINDLE_SPEED) return error(localize("Spindle speed exceeds maximum value."));
 		//writer.block(
 		 // outputs.s.format(tool.spindleRPM),formats.m.format(tool.isClockwise() ? 3 : 4)
 		//);
@@ -630,24 +648,23 @@ function onSection() {
 		// 	// writer.block(formats.m.format(xxx)); // shortest path traverse
 		// }
 	}
-
+	//NEXT TOOL
 	var nextTool = ((getNextTool(tool.number)!==undefined)?getNextTool(tool.number):getSection(0).getTool()) as Tool;
-
+	//WORK OFFSET
 	var offset = currentSection.workOffset;
-	if (offset == 0) {
-		warningOnce(localize("WORK OFFSET: NULL USING G54"),0);
-		offset = 1;
+	if(Math.round(offset) !== offset) return error(localize("WORK OFFSET: NOT AN INTEGER. USE 1-48 OR 54-59"));
+	if (offset === 0) {
+		warningOnce(localize("WORK OFFSET: ZERO USING G54"),0);
+		offset = 54;
 	}
-	if (offset > 0) {
-		if (offset > 6) {
-			var p = offset - 6; // 1->...
-			if (p > 300) return error(localize("Work offset out of range."));
-			wfo =(formats.g.format(54.1) + " P" + p); // G54.1P
-			currentWorkOffset = offset;
-		} else {
-			wfo = (formats.g.format(53 + offset)); // G54->G59
-			currentWorkOffset = offset;
-		}
+	if(offset >= 1 && offset <= 48) {
+		wfo = (formats.g.format(54.1) + " P" + offset);
+		currentWorkOffset = offset;
+	} else if(offset >= 54 && offset <= 59) {
+		wfo = (formats.g.format(offset));
+		currentWorkOffset = offset;
+	} else {
+		return error(localize("WORK OFFSET: INVALID. USE 1-48 OR 54-59"));
 	}
 
 	force.xyz();
@@ -815,8 +832,8 @@ function onCyclePoint(x: number,y: number,z: number) {
 		if (workOffset > 99) {
 			error(localize("Work offset is out of range."));
 			return;
-		} else if(workOffset > 6) {
-			probeWorkOffsetCode = formats.probe.format(workOffset - 6 + 100);
+		} else if(workOffset >= 1 && workOffset <= 48) {
+			probeWorkOffsetCode = formats.probe.format(workOffset + 100);
 		} else {
 			probeWorkOffsetCode = workOffset + "."; // G54->G59
 		}
@@ -1345,7 +1362,7 @@ function onCommand(command: COMMAND): void {
 				onCommand(COMMAND.COOLANT_OFF);
 				writer.block(formats.g.format(53),"Z" + formats.xyz.format(0),formats.m.format(19));//RETRACT
 				//writer.block(formats.g.format(8),formats.p.format(0)); //WHATS GCODE 8
-				writer.block(formats.g.format(65),"P" + 9858,formats.t.format(tool.number),"H" + formats.xyz.format(properties.toolBreakageTolerance));//"B" + formats.xyz.format(0),
+				writer.block(formats.g.format(65),"P" + 9858,formats.t.format(tool.number),"H" + formats.xyz.format(0.01));//"B" + formats.xyz.format(0),
 				toolChecked = true;
 			}
 		case COMMAND.TOOL_MEASURE:
