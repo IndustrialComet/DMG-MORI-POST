@@ -180,12 +180,6 @@ var force = {
 		force.feed();
 	}
 };
-//FEED
-var feed = {
-	get(f: number): string | undefined {
-		return outputs.f.format(f);
-	}
-}
 //COOLANT
 var coolant = {
 	current: COOLANT.OFF,
