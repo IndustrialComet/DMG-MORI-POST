@@ -1315,7 +1315,7 @@ function onClose() {
 		writer.block(formats.g.format(54.4),"P0");//G54.4  P0
 	}
 	//HOME
-	writer.block(formats.g.format(53),"X" + formats.xyz.format(-25.));//G53 MACHINE COORD X-25.
+	writer.block(formats.g.format(53),"X" + formats.xyz.format(-33.9892));//G53 MACHINE COORD X-25.
 	writer.block(formats.g.format(53),"Y" + formats.xyz.format(0));//G53 MACHINE COORD Y0
 	//END COMMANDS
 	onImpliedCommand(COMMAND.END);
